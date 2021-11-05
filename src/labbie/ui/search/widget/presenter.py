@@ -72,19 +72,19 @@ class SearchPresenter:
         for result in results:
             result_presenter = self._result_builder.build()
 
-            result_text = []
+            league_result = []
             if result.league_result is not None:
-                result_text.append(f'LEAGUE ({len(result.league_result)})')
-                result_text.append(summarizer(result.league_result))
+                league_result.append(f'LEAGUE ({len(result.league_result)})')
+                league_result.append(summarizer(result.league_result))
+            league_result = '\n'.join(league_result) or None
 
+            daily_result = []
             if result.daily_result is not None:
-                if result_text:
-                    result_text.append('')
-                result_text.append(f'DAILY ({len(result.daily_result)})')
-                result_text.append(summarizer(result.daily_result))
-            result_text = '\n'.join(result_text)
+                daily_result.append(f'DAILY ({len(result.daily_result)})')
+                daily_result.append(summarizer(result.daily_result))
+            daily_result = '\n'.join(daily_result) or None
 
-            result_presenter.populate_view(result.search, result_text)
+            result_presenter.populate_view(result.search, league_result, daily_result)
             title = result.title[:30] + ('...' if len(result.title) > 30 else '')
             self._view.add_result(title, result_presenter.widget)
 
@@ -93,7 +93,7 @@ class SearchPresenter:
         app_state = self._app_state
 
         if (app_state.league_enchants.state is not enchants.State.LOADED
-            and app_state.daily_enchants.state is not enchants.State.LOADED):
+                and app_state.daily_enchants.state is not enchants.State.LOADED):
             return
 
         mods = set()
