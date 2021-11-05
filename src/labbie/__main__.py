@@ -63,44 +63,19 @@ async def start(log_filter):
 
     # ensure directories exist
     (constants.data_dir / 'screenshots').mkdir(parents=True, exist_ok=True)
-    (constants.data_dir / 'league').mkdir(parents=True, exist_ok=True)
-    (constants.data_dir / 'daily').mkdir(parents=True, exist_ok=True)
+    (constants.helm_enchants_dir / 'league').mkdir(parents=True, exist_ok=True)
+    (constants.helm_enchants_dir / 'daily').mkdir(parents=True, exist_ok=True)
 
     config = injector.get(_Config)
+
     app_state = injector.get(state.AppState)
     if config.league:
-        league_path = constants.data_dir / 'league'
-        try:
-            app_state.league_enchants.load(league_path)
-        except errors.EnchantDataNotFound:
-            app_state.last_error = 'Unable to load league enchants'
-            app_state.state = state.State.ERROR
-            logger.error('Unable to load league enchants')
-        if app_state.league_enchants.refresh_needed():
-            asyncio.create_task(download(league_path, constants, app_state, app_state.league_enchants))
-
+        asyncio.create_task(app_state.league_enchants.download_or_load(constants))
     if config.daily:
-        daily_path = constants.data_dir / 'daily'
-        try:
-            app_state.daily_enchants.load(daily_path)
-        except errors.EnchantDataNotFound:
-            app_state.last_error = 'Unable to load daily enchants'
-            app_state.state = state.State.ERROR
-            logger.error('Unable to load daily enchants')
-        if app_state.daily_enchants.refresh_needed():
-            asyncio.create_task(download(daily_path, constants, app_state, app_state.daily_enchants))
+        asyncio.create_task(app_state.daily_enchants.download_or_load(constants))
 
     app_presenter = injector.get(app.AppPresenter)
     app_presenter.launch()
-
-
-async def download(path: pathlib.Path, constants: _Constants, app_state: state.AppState, curr_enchants: enchants.Enchants):
-    try:
-        await enchants.download(path, curr_enchants, constants.user_agent)
-    except errors.EnchantDataNotFound:
-        app_state.last_error = f'Unable to download recent {curr_enchants.type} enchant data'
-        app_state.state = state.State.ERROR
-        logger.error(f'Unable to download recent {curr_enchants.type} enchant data')
 
 
 if __name__ == '__main__':

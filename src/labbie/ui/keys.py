@@ -9,7 +9,8 @@ import injector
 from labbie import result
 from labbie.ui.system_tray import presenter as system_tray
 from labbie.ui.search.window import presenter as search
-# from labbie.ui.settings.window import presenter as settings
+from labbie.ui.settings.window import presenter as settings
+from labbie.ui.error.window import presenter as error
 
 
 @dataclasses.dataclass(frozen=True)
@@ -52,17 +53,30 @@ class SystemTrayIconKey(_Key):
 class SearchWindowKey(_PopulatableKey):
     DELETE_WHEN_CLOSED: ClassVar[bool] = True
     results: Union[None, result.Result, List[result.Result]] = dataclasses.field(default=None, compare=False)
+    clear: bool = dataclasses.field(default=False, compare=False)
 
     def get_presenter(self, injector: injector.Injector):
         return injector.get(search.SearchWindowPresenter)
 
     def _populate_presenter(self, presenter: search.SearchWindowPresenter):
-        presenter.populate_view(self.results)
+        presenter.populate_view(self.results, clear=self.clear)
 
 
-# @dataclasses.dataclass(frozen=True)
-# class SettingsWindowKey(_Key):
-#     DELETE_WHEN_CLOSED: ClassVar[bool] = True
+@dataclasses.dataclass(frozen=True)
+class ErrorWindowKey(_PopulatableKey):
+    DELETE_WHEN_CLOSED: ClassVar[bool] = True
+    exception: Exception = dataclasses.field(compare=False)
 
-#     def get_presenter(self, injector: injector.Injector):
-#         return injector.get(settings.SettingsWindowPresenter)
+    def get_presenter(self, injector: injector.Injector):
+        return injector.get(error.ErrorWindowPresenter)
+
+    def _populate_presenter(self, presenter: error.ErrorWindowPresenter):
+        presenter.populate_view(self.exception)
+
+
+@dataclasses.dataclass(frozen=True)
+class SettingsWindowKey(_Key):
+    DELETE_WHEN_CLOSED: ClassVar[bool] = True
+
+    def get_presenter(self, injector: injector.Injector):
+        return injector.get(settings.SettingsWindowPresenter)

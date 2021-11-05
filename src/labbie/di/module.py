@@ -19,7 +19,7 @@ class Module(injector.Module):
 
     @injector.singleton
     @injector.provider
-    def provide_client_config(self, constants: constants.Constants) -> config.Config:
+    def provide_config(self, constants: constants.Constants) -> config.Config:
         loaded = config.Config.load(base_path=constants.config_dir)
         logger.debug(f'Loaded config {loaded}')
         return loaded

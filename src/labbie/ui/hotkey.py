@@ -17,7 +17,7 @@ class Hotkey(QtCore.QObject):
     def stop(self, disconnect=True):
         if disconnect:
             self.pressed.disconnect()
-        keyboard.remove_hotkey(self.pressed.emit)
+        keyboard.remove_hotkey(self.hotkey)
 
     def set_hotkey(self, hotkey):
         if self.hotkey == hotkey:

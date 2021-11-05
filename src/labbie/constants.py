@@ -100,6 +100,10 @@ class Constants(BaseConstants):
     config_dir: pathlib.Path = _DEFAULT_CONFIG_DIR
     user_agent: str = f'Labbie v{version.__version__}'
 
+    @property
+    def helm_enchants_dir(self):
+        return self.data_dir / 'helm'
+
     @classmethod
     def from_toml(cls, path: pathlib.Path, overrides=None):
         with path.open() as f:

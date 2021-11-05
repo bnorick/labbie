@@ -39,17 +39,20 @@ class ResultWidget(base.BaseWidget):
 
         self.switch_daily.toggled.connect(self.on_daily_toggled)
 
-        self._result = None
+        self._league_result = None
         self._daily_result = None
 
-    def set_result(self, search, result, daily_result=None):
-        self._result = result
+    def set_result(self, search, league_result, daily_result=None):
+        self._league_result = league_result
         self._daily_result = daily_result
 
-        self.widget_daily.setVisible(daily_result is not None)
+        self.widget_daily.setVisible(league_result is not None and daily_result is not None)
 
         self.lbl_search.setText(search)
-        self.edit_result.setText(result)
+        if league_result is not None:
+            self.edit_result.setText(league_result)
+        else:
+            self.edit_result.setText(daily_result)
 
     def on_daily_toggled(self, checked):
-        self.edit_result.setText(self._daily_result if checked else self._result)
+        self.edit_result.setText(self._daily_result if checked else self._league_result)

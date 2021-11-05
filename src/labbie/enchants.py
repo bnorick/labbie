@@ -10,6 +10,7 @@ import aiohttp
 import loguru
 import orjson
 
+from labbie import constants
 from labbie import errors
 from labbie import mixins
 
@@ -17,7 +18,8 @@ logger = loguru.logger
 _FILENAME_FORMAT = '{date:%Y-%m-%d}.json'
 _URL_FORMAT = f'https://labbie.blob.core.windows.net/enchants/{{type}}/{_FILENAME_FORMAT}'
 _VALUE_PATTERN = re.compile(r'\d+')
-_UNSET = object()
+_HISTORICAL_DAYS = 15
+_Constants = constants.Constants
 
 
 class Helm(NamedTuple):
@@ -65,6 +67,7 @@ class Enchant:
 
 class State(enum.Enum):
 
+    DISABLED = 'Disabled via settings'
     DOWNLOADING = 'Downloading latest'
     LOADING = 'Loading'
     LOADED = 'Loaded'
@@ -75,18 +78,18 @@ class State(enum.Enum):
 class Enchants(mixins.ObservableMixin):
 
     type: str
-    state: State = State.LOADING
+    state: State = State.DISABLED
     enchants: Optional[List[Enchant]] = None
     date: Optional[datetime.date] = None
 
     def __post_init__(self):
         super().__init__()
 
-    def update_enchants(self, date: Optional[datetime.date], enchants: Optional[List[Enchant]]):
-        if enchants:
+    def set_enchants(self, date: Optional[datetime.date], enchants: Optional[List[Enchant]]):
+        if enchants is not None:
             self.state = State.LOADED
         else:
-            self.state = State.MISSING
+            self.state = State.DISABLED
         self.enchants = enchants
         self.date = date
         self.notify(enchants=enchants)
@@ -96,13 +99,68 @@ class Enchants(mixins.ObservableMixin):
         try:
             date, enchants_ = load_enchants(path)
             self.date = date
-            self.update_enchants(date, enchants_)
+            self.set_enchants(date, enchants_)
         except errors.EnchantDataNotFound:
             self.state = State.MISSING
             raise
 
     def refresh_needed(self):
         return self.date != datetime.date.today()
+
+    def disable(self):
+        self.state = State.DISABLED
+
+    async def download_or_load(self, constants: _Constants):
+        cache_dir = constants.helm_enchants_dir / self.type
+
+        # first try to load from cache if most recent data is cached
+        try:
+            self.state = State.LOADING
+            date, enchants = load_enchants(cache_dir, date=now())
+            self.set_enchants(date, enchants)
+            return
+        except errors.EnchantDataNotFound:
+            pass
+
+        # either most recent data cache was corrupt or we don't have it, load most recent cached if it's
+        # the most recent downloadable, otherwise download latest
+        first_cached, last_cached = cached_dates(cache_dir)
+        last_downloadable = await last_downloadable_date(constants.user_agent, self.type, past_days=_HISTORICAL_DAYS)
+
+        # try to load (fresh) cached content if we can
+        if last_cached is not None:
+            date = last_cached
+            earliest_date = first_cached if last_downloadable is None else last_downloadable
+            while date >= earliest_date:
+                try:
+                    self.state = State.LOADING
+                    date, enchants = load_enchants(cache_dir, date=date)
+                    self.set_enchants(date, enchants)
+                    return
+                except errors.EnchantDataInvalid:
+                    date -= datetime.timedelta(days=1)
+                except errors.EnchantDataNotFound:
+                    # ignore missing files
+                    break
+
+        if last_downloadable is None:
+            self.state = State.MISSING
+            return
+
+        try:
+            self.state = State.DOWNLOADING
+            date, enchants = await download(cache_dir, self.type, constants.user_agent,
+                                            past_days=_HISTORICAL_DAYS)
+            self.set_enchants(date, enchants)
+        except errors.EnchantDataNotFound:
+            # this shouldn't happen because we checked the last downloadable date and one existed within
+            # _HISTORICAL_DAYS
+            logger.debug(f'{first_cached=} {last_cached=} {last_downloadable=}')
+            raise
+
+    @property
+    def enabled(self):
+        return self.state is not State.DISABLED
 
     @property
     def bases(self):
@@ -150,7 +208,7 @@ class Enchants(mixins.ObservableMixin):
 
 
 def now():
-    return datetime.datetime.now(datetime.timezone.utc)
+    return datetime.datetime.now(datetime.timezone.utc).date()
 
 
 def refresh_needed(cache_dir: pathlib.Path):
@@ -158,44 +216,83 @@ def refresh_needed(cache_dir: pathlib.Path):
     return not path.exists()
 
 
-async def download(cache_dir: pathlib.Path, curr_enchants: Enchants, user_agent: str):
-    logger.debug(f'downloading {curr_enchants.type} enchants')
+def cached_dates(cache_dir: pathlib.Path):
+    paths = sorted(cache_dir.iterdir())
+
+    earliest_date = None
+    for path in paths:
+        try:
+            earliest_date = datetime.date.fromisoformat(path.stem)
+            break
+        except ValueError:
+            pass
+    else:
+        # short circuit if we found no valid date filenames
+        return None, None
+
+    latest_date = None
+    for path in reversed(paths):
+        try:
+            latest_date = datetime.date.fromisoformat(path.stem)
+            break
+        except ValueError:
+            pass
+
+    return earliest_date, latest_date
+
+
+async def last_downloadable_date(user_agent: str, type_: str, past_days):
+    today = now()
+    async with aiohttp.ClientSession(headers={'User-Agent': user_agent}) as session:
+        for days_back in range(past_days):
+            date = today - datetime.timedelta(days=days_back)
+            async with session.head(_URL_FORMAT.format(type=type_, date=date)) as resp:
+                if resp.status == 404:
+                    continue
+
+                return date
+    return None
+
+
+async def download(cache_dir: pathlib.Path, type_: str, user_agent: str, past_days: int):
+    logger.debug(f'downloading {type_} enchants')
     today = now()
     async with aiohttp.ClientSession(headers={'User-Agent': user_agent}) as session:
         for days_back in range(15):
             date = today - datetime.timedelta(days=days_back)
-            async with session.get(_URL_FORMAT.format(type=curr_enchants.type, date=date)) as resp:
+            async with session.get(_URL_FORMAT.format(type=type_, date=date)) as resp:
                 if resp.status == 404:
                     continue
 
-                if curr_enchants.date and curr_enchants.date >= date:
-                    raise errors.EnchantDataNotFound
-
-                curr_enchants.state = State.DOWNLOADING
                 content = await resp.text(encoding='utf8')
                 with (cache_dir / _FILENAME_FORMAT.format(date=date)).open('w', encoding='utf8') as f:
                     f.write(content)
 
-                curr_enchants.state = State.LOADING
                 enchants = [Enchant(*vals) for vals in orjson.loads(content)]
+                return date, enchants
 
-                logger.debug(f'setting enchants for {curr_enchants.type}')
-                curr_enchants.update_enchants(date, enchants)
-
-                break
-        else:
-            raise errors.EnchantDataNotFound
+        # if nothing was found for the 15 days, raise
+        raise errors.EnchantDataNotFound
 
 
-def load_enchants(cache_dir: pathlib.Path):
-    today = now()
-    for days_back in range(15):
-        date = today - datetime.timedelta(days=days_back)
+def load_enchants(cache_dir: pathlib.Path, date=None):
+    if date is not None:
+        dates = (date, )
+    else:
+        today = now()
+        dates = (today - datetime.timedelta(days=days_back) for days_back in range(15))
+
+    for date in dates:
         path = cache_dir / _FILENAME_FORMAT.format(date=date)
         if path.exists():
-            with path.open(encoding='utf8') as f:
-                content = f.read()
-                return date, [Enchant(*vals) for vals in orjson.loads(content)]
+            try:
+                with path.open(encoding='utf8') as f:
+                    content = f.read()
+                    return date, [Enchant(*vals) for vals in orjson.loads(content)]
+            except orjson.JSONDecodeError:
+                # delete broken files when we find them
+                path.unlink()
+
     raise errors.EnchantDataNotFound
 
 
