@@ -9,7 +9,7 @@ import injector
 from labbie import result
 from labbie.ui.system_tray import presenter as system_tray
 from labbie.ui.search.window import presenter as search
-# from labbie.ui.settings.window import presenter as settings
+from labbie.ui.settings.window import presenter as settings
 
 
 @dataclasses.dataclass(frozen=True)
@@ -60,9 +60,9 @@ class SearchWindowKey(_PopulatableKey):
         presenter.populate_view(self.results)
 
 
-# @dataclasses.dataclass(frozen=True)
-# class SettingsWindowKey(_Key):
-#     DELETE_WHEN_CLOSED: ClassVar[bool] = True
+@dataclasses.dataclass(frozen=True)
+class SettingsWindowKey(_Key):
+    DELETE_WHEN_CLOSED: ClassVar[bool] = True
 
-#     def get_presenter(self, injector: injector.Injector):
-#         return injector.get(settings.SettingsWindowPresenter)
+    def get_presenter(self, injector: injector.Injector):
+        return injector.get(settings.SettingsWindowPresenter)

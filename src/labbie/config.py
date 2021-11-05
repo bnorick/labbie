@@ -3,11 +3,13 @@ import dataclasses
 import pathlib
 from typing import Optional
 
+import loguru
 import toml
 
 from labbie import mixins
 from labbie import bounds
 
+logger = loguru.logger
 _Bounds = bounds.Bounds
 
 
@@ -37,6 +39,7 @@ class HotkeysConfig(mixins.ObservableMixin, mixins.SerializableMixin):
 
 @dataclasses.dataclass
 class OcrConfig(mixins.SerializableMixin):
+    clear_previous: bool = True
     bounds: _Bounds = _Bounds(left=335, top=210, right=916, bottom=455)
 
 
@@ -61,4 +64,5 @@ class Config(BaseConfig, mixins.SerializableMixin):
     @classmethod
     def load(cls, base_path: pathlib.Path):
         path = base_path / 'config.toml'
+        logger.info(f'Loading config from {path}')
         return cls.from_toml(path)

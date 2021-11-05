@@ -15,7 +15,7 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
         self.menu = QtWidgets.QMenu()
 
         self.action_search = self.menu.addAction('Search')
-        # self.action_settings = self.menu.addAction('Settings')
+        self.action_settings = self.menu.addAction('Settings')
 
         exit_action = self.menu.addAction('Exit')
         exit_action.triggered.connect(self.exit)
@@ -27,8 +27,8 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
     def set_search_triggered_handler(self, handler):
         self._connect_signal_to_slot(self.action_search.triggered, handler)
 
-    # def set_settings_triggered_handler(self, handler):
-    #     self._connect_signal_to_slot(self.action_settings.triggered, handler)
+    def set_settings_triggered_handler(self, handler):
+        self._connect_signal_to_slot(self.action_settings.triggered, handler)
 
     @staticmethod
     def _connect_signal_to_slot(signal, slot):
