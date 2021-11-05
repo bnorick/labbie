@@ -5,12 +5,15 @@ import injector
 import loguru
 
 from labbie import config
+from labbie import constants
 from labbie import state
 from labbie.ui.app import presenter as app
 from labbie.ui.settings.widget import view
+from labbie.ui.screen_selection.widget import view as screen_selection
 
 logger = loguru.logger
 _Config = config.Config
+_Constants = constants.Constants
 
 
 class SettingsPresenter:
@@ -18,55 +21,79 @@ class SettingsPresenter:
     @injector.inject
     def __init__(
         self,
+        constants: _Constants,
         app_state: state.AppState,
         app_presenter: app.AppPresenter,
         config: _Config,
-        view: view.SettingsWidget
+        view: view.SettingsWidget,
+        screen_selection_view_builder: injector.AssistedBuilder[screen_selection.ScreenSelectionWidget]
     ):
+        self._constants = constants
         self._app_state = app_state
         self._app_presenter = app_presenter
         self._config = config
         self._view = view
+        self._screen_selection_view_builder = screen_selection_view_builder
 
         self._view.set_select_bounds_handler(self.on_select_bounds)
+        self._view.set_save_handler(self.on_save)
 
         self._view.league = self._config.league
         self._view.daily = self._config.daily
         self._view.clear_previous = self._config.ocr.clear_previous
         self._view.hotkey = self._config.ui.hotkeys.ocr
-        self._view.left = self._config.ocr.bounds.left
-        self._view.top = self._config.ocr.bounds.top
-        self._view.right = self._config.ocr.bounds.right
-        self._view.bottom = self._config.ocr.bounds.bottom
-
-        # self._search_id_iter = iter(itertools.count())
-
-        # self._view.set_search_mod_handler(self.on_search_mod)
-        # self._view.set_exact_mod_handler(self.on_exact_mod)
-        # self._view.set_search_base_handler(self.on_search_base)
-        # self._view.set_all_handler(self.on_all)
-        # self._view.set_screen_capture_handler(self.on_screen_capture)
-
-        # self._mods = []
-        # self._unexact_mods = []
-        # self._bases = []
-
-        # app_state.league_enchants.attach(self, self.on_enchants_changed)
-        # app_state.daily_enchants.attach(self, self.on_enchants_changed)
-        # self.on_enchants_changed(app_state.league_enchants)
-
-        # # TODO(bnorick): attach to enchants so that we can update the dropdowns when enchants change
-        # influences = ['Shaper', 'Elder', 'Crusader', 'Redeemer', 'Hunter', 'Warlord']
-        # self._view.set_influence_options(influences, influences)
-        # self._view.set_mods(['Loading...'], None)
-        # self._view.set_bases(['Loading...'])
+        self._view.left = str(self._config.ocr.bounds.left)
+        self._view.top = str(self._config.ocr.bounds.top)
+        self._view.right = str(self._config.ocr.bounds.right)
+        self._view.bottom = str(self._config.ocr.bounds.bottom)
 
     @property
     def widget(self):
         return self._view
 
     def on_select_bounds(self, checked):
-        pass
+        self._screen_selection_view = self._screen_selection_view_builder.build(
+            left=int(self._view.left),
+            top=int(self._view.top),
+            right=int(self._view.right),
+            bottom=int(self._view.bottom)
+        )
+        self._screen_selection_view.set_done_handler(self.on_screen_selection_done)
+        self._screen_selection_view.show()
+
+    def on_screen_selection_done(self):
+        self._screen_selection_view.hide()
+        left, top, right, bottom = self._screen_selection_view.get_position()
+        self._view.left = str(left)
+        self._view.top = str(top)
+        self._view.right = str(right)
+        self._view.bottom = str(bottom)
+
+    async def on_save(self, checked):
+        if self._view.league != self._config.league:
+            self._config.league = self._view.league
+            if self._config.league:
+                await self._app_state.league_enchants.download_or_load(self._constants)
+            else:
+                self._app_state.league_enchants.set_enchants(None, None)
+
+        if self._view.daily != self._config.daily:
+            self._config.daily = self._view.daily
+            if self._config.daily:
+                await self._app_state.daily_enchants.download_or_load(self._constants)
+            else:
+                self._app_state.daily_enchants.set_enchants(None, None)
+
+        if self._view.hotkey != self._config.ui.hotkeys.ocr:
+            self._config.ui.hotkeys.ocr = self._view.hotkey
+            self._config.ui.hotkeys.notify(ocr=self._view.hotkey)
+        self._config.ocr.clear_previous = self._view.clear_previous
+        self._config.ocr.bounds.left = int(self._view.left)
+        self._config.ocr.bounds.top = int(self._view.top)
+        self._config.ocr.bounds.right = int(self._view.right)
+        self._config.ocr.bounds.bottom = int(self._view.bottom)
+        self._config.save()
+        self._view.close()
 
     def cleanup(self):
         pass

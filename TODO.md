@@ -1,0 +1,3 @@
+- Make loading a bit more resilient. It seems possible that a user could kill the app while it's saving enchants to disk and corrupt the cached enchants, resulting in failed loading.
+- Add enchant verification to OCR
+-

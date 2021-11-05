@@ -42,15 +42,15 @@ class SearchPresenter:
         self._unexact_mods = []
         self._bases = []
 
-        app_state.league_enchants.attach(self, self.on_enchants_changed)
-        app_state.daily_enchants.attach(self, self.on_enchants_changed)
+        app_state.league_enchants.attach(self, self.on_enchants_changed, to='enchants')
+        app_state.daily_enchants.attach(self, self.on_enchants_changed, to='enchants')
         self.on_enchants_changed(app_state.league_enchants)
 
         # TODO(bnorick): attach to enchants so that we can update the dropdowns when enchants change
         influences = ['Shaper', 'Elder', 'Crusader', 'Redeemer', 'Hunter', 'Warlord']
         self._view.set_influence_options(influences, influences)
-        self._view.set_mods(['Loading...'], None)
-        self._view.set_bases(['Loading...'])
+        self._view.set_mods([''], None)
+        self._view.set_bases([''])
 
     @property
     def widget(self):
@@ -59,10 +59,14 @@ class SearchPresenter:
     def cleanup(self):
         pass
 
-    def populate_view(self, results: Union[None, search_result.Result, List[search_result.Result]], base=False):
+    def populate_view(self, results: Union[None, search_result.Result, List[search_result.Result]],
+                      clear=False, base=False):
         logger.debug(f'{results=}')
         if not results:
             return
+
+        if clear:
+            self._view.clear_results()
 
         if isinstance(results, search_result.Result):
             results = [results]
@@ -89,11 +93,12 @@ class SearchPresenter:
             self._view.add_result(title, result_presenter.widget)
 
     def on_enchants_changed(self, val):
-        logger.info(f'ENCHANTS CHANGED type={val.type if val else None}')
         app_state = self._app_state
 
-        if (app_state.league_enchants.state is not enchants.State.LOADED
-                and app_state.daily_enchants.state is not enchants.State.LOADED):
+        if (app_state.league_enchants.state is enchants.State.DISABLED
+                and app_state.daily_enchants.state is enchants.State.DISABLED):
+            self._view.set_mods([''], None)
+            self._view.set_bases([''])
             return
 
         mods = set()
@@ -149,39 +154,62 @@ class SearchPresenter:
         self._view.set_mods(mods, equivalent_mods)
 
     def on_search_mod(self, checked):
+        try:
+            self._app_state.ensure_scrape_enabled()
+        except RuntimeError as e:
+            self._app_presenter.show(keys.ErrorWindowKey(str(e)))
+            return
+
         mod = self._view.mod
 
         league_matches = None
-        try:
-            league_matches = self._app_state.league_enchants.find_matching_enchants(mod)
-        except errors.EnchantsNotLoaded:
-            pass
+        if self._app_state.league_enchants.enabled:
+            try:
+                league_matches = self._app_state.league_enchants.find_matching_enchants(mod)
+            except errors.EnchantsNotLoaded as e:
+                self._app_presenter.show(keys.ErrorWindowKey(e))
+                return
 
         daily_matches = None
         try:
             daily_matches = self._app_state.daily_enchants.find_matching_enchants(mod)
-        except errors.EnchantsNotLoaded:
-            pass
+        except errors.EnchantsNotLoaded as e:
+            self._app_presenter.show(keys.ErrorWindowKey(e))
+            return
 
         result = search_result.Result(title=mod, search=mod, league_result=league_matches, daily_result=daily_matches)
         self.populate_view(result)
 
     def on_search_base(self, checked):
+        try:
+            self._app_state.ensure_scrape_enabled()
+        except RuntimeError as e:
+            self._app_presenter.show(keys.ErrorWindowKey(str(e)))
+            return
+
         base_name = self._view.base
         ilvl = int(self._view.ilvl or 0)
         influences = self._view.influences
 
         league_matches = None
-        try:
-            league_matches = self._app_state.league_enchants.find_matching_bases(base_name, ilvl, influences)
-        except (errors.EnchantsNotLoaded, errors.NoSuchBase):
-            pass
+        if self._app_state.league_enchants.enabled:
+            try:
+                league_matches = self._app_state.league_enchants.find_matching_bases(base_name, ilvl, influences)
+            except errors.EnchantsNotLoaded as e:
+                self._app_presenter.show(keys.ErrorWindowKey(e))
+                return
+            except errors.NoSuchBase:
+                league_matches = []
 
         daily_matches = None
-        try:
-            daily_matches = self._app_state.daily_enchants.find_matching_bases(base_name, ilvl, influences)
-        except (errors.EnchantsNotLoaded, errors.NoSuchBase):
-            pass
+        if self._app_state.daily_enchants.enabled:
+            try:
+                daily_matches = self._app_state.daily_enchants.find_matching_bases(base_name, ilvl, influences)
+            except errors.EnchantsNotLoaded as e:
+                self._app_presenter.show(keys.ErrorWindowKey(e))
+                return
+            except errors.NoSuchBase:
+                daily_matches = []
 
         search = []
         if ilvl != 0:
@@ -195,13 +223,13 @@ class SearchPresenter:
         self.populate_view(result, base=True)
 
     def on_all(self, checked):
-        league_matches = self._app_state.league_enchants.enchants
-        daily_matches = self._app_state.daily_enchants.enchants
+        league_enchants = self._app_state.league_enchants.enchants
+        daily_enchants = self._app_state.daily_enchants.enchants
 
-        bases = search_result.Result(title='Bases', search='All Bases', league_result=league_matches, daily_result=daily_matches)
+        bases = search_result.Result(title='Bases', search='All Bases', league_result=league_enchants, daily_result=daily_enchants)
         self.populate_view(bases)
 
-        enchants = search_result.Result(title='Enchants', search='All Enchants', league_result=league_matches, daily_result=daily_matches)
+        enchants = search_result.Result(title='Enchants', search='All Enchants', league_result=league_enchants, daily_result=daily_enchants)
         self.populate_view(enchants, base=True)
 
     def on_screen_capture(self, checked):
@@ -209,3 +237,6 @@ class SearchPresenter:
 
     def show(self):
         self._view.show()
+
+
+from labbie.ui import keys  # noqa: E402

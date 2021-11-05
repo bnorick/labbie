@@ -39,15 +39,6 @@ class SettingsWidget(base.BaseWidget):
 
         self.btn_save = QtWidgets.QPushButton('Save', self)
         self.btn_cancel = QtWidgets.QPushButton('Cancel', self)
-        # layout_league = QtWidgets.QHBoxLayout()
-        # layout_league.addWidget(lbl_league)
-        # layout_league.addWidget(self.switch_league)
-        # layout_league.addStretch(1)
-
-        # layout_daily = QtWidgets.QHBoxLayout()
-        # layout_daily.addWidget(lbl_daily)
-        # layout_daily.addWidget(self.switch_daily)
-        # layout_daily.addStretch(1)
 
         layout_active = QtWidgets.QGridLayout()
         layout_active.addWidget(lbl_league, 0, 0)
@@ -63,15 +54,15 @@ class SettingsWidget(base.BaseWidget):
         lbl_clear = QtWidgets.QLabel('Clear previous results', self)
         self.switch_clear = switch.Switch(self, thumb_radius=8, track_radius=5)
 
-        layout_clear = QtWidgets.QHBoxLayout()
-        layout_clear.addWidget(lbl_clear)
-        layout_clear.addWidget(self.switch_clear)
-        layout_clear.addStretch(1)
+        layout_capture_general = QtWidgets.QGridLayout()
+        layout_capture_general.addWidget(lbl_hotkey, 0, 0)
+        layout_capture_general.addWidget(self.edit_hotkey, 0, 1)
+        layout_capture_general.addWidget(lbl_clear, 1, 0)
+        layout_capture_general.addWidget(self.switch_clear, 1, 1)
 
-        layout_hotkey = QtWidgets.QHBoxLayout()
-        layout_hotkey.addWidget(lbl_hotkey)
-        layout_hotkey.addWidget(self.edit_hotkey)
-        layout_hotkey.addStretch(1)
+        layout_capture_top = QtWidgets.QHBoxLayout()
+        layout_capture_top.addLayout(layout_capture_general)
+        layout_capture_top.addStretch(1)
 
         layout_bounds_vals_grid = QtWidgets.QGridLayout()
         layout_bounds_vals_grid.addWidget(lbl_bounds_left, 0, 0, Qt.AlignmentFlag.AlignRight)
@@ -98,8 +89,7 @@ class SettingsWidget(base.BaseWidget):
         group_bounds.setLayout(layout_bounds)
 
         layout_screen_capture = QtWidgets.QVBoxLayout()
-        layout_screen_capture.addLayout(layout_clear)
-        layout_screen_capture.addLayout(layout_hotkey)
+        layout_screen_capture.addLayout(layout_capture_top)
         layout_screen_capture.addWidget(group_bounds)
 
         group_screen_capture.setLayout(layout_screen_capture)

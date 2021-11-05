@@ -25,6 +25,9 @@ class BaseConfig(mixins.ObservableMixin, abc.ABC):
 class HotkeysConfig(mixins.ObservableMixin, mixins.SerializableMixin):
     ocr: Optional[str] = '`'
 
+    # TODO(bnorick): figure out how to hook notify into ocr changes best, so we don't need to
+    # manually notify when we change it (or maybe that's best, who knows)
+
     @classmethod
     def from_dict(cls, config_dict):
         # handle 'none' in toml to => None
@@ -59,10 +62,21 @@ class Config(BaseConfig, mixins.SerializableMixin):
     def from_toml(cls, path: pathlib.Path):
         with path.open() as f:
             config_dict = toml.load(f)
-        return cls.from_dict(config_dict)
+        config = cls.from_dict(config_dict)
+        config._path = path
+        return config
 
     @classmethod
     def load(cls, base_path: pathlib.Path):
         path = base_path / 'config.toml'
         logger.info(f'Loading config from {path}')
         return cls.from_toml(path)
+
+    def save(self):
+        backup_path = self._path.with_suffix('.toml.bak')
+        if backup_path.exists():
+            backup_path.unlink()
+
+        self._path.rename(backup_path)
+        with self._path.open('w', encoding='utf8') as f:
+            toml.dump(dataclasses.asdict(self), f)

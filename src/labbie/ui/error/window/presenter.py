@@ -1,20 +1,21 @@
 import injector
 
-from labbie.ui.search.widget import presenter as widget
-from labbie.ui.search.window import view
+from labbie.ui.error.widget import presenter as widget
+from labbie.ui.error.window import view
 
 
-class SearchWindowPresenter:
+class ErrorWindowPresenter:
 
     @injector.inject
-    def __init__(self, widget_presenter: widget.SearchPresenter, view_builder: injector.AssistedBuilder[view.SearchWindow]):
+    def __init__(self, widget_presenter: widget.ErrorPresenter,
+                 view_builder: injector.AssistedBuilder[view.ErrorWindow]):
         self._widget_presenter = widget_presenter
         self._view = view_builder.build(widget=widget_presenter.widget)
 
         self._view.signal_close.connect(self.close)
 
-    def populate_view(self, results, clear):
-        self._widget_presenter.populate_view(results, clear)
+    def populate_view(self, exception):
+        self._widget_presenter.populate_view(exception)
 
     def show(self):
         self._view.show()

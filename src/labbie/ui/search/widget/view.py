@@ -169,6 +169,10 @@ class SearchWidget(base.BaseWidget):
     def add_result(self, title, widget: QtWidgets.QWidget):
         self.tabs.addTab(widget, title)
 
+    def clear_results(self):
+        for _ in range(self.tabs.count()):
+            self.tabs.removeTab(0)
+
     # Properties
     @utils.combo_box_property
     def mod(self):

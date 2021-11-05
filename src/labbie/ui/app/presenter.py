@@ -35,6 +35,7 @@ class AppPresenter:
         self.presenters = {}
 
     def _ocr_hotkey_changed(self, val):
+        logger.debug(f'ocr hotkey changed {val=}')
         current_hotkey = self._hotkeys.pop('ocr', None)
         if current_hotkey:
             current_hotkey.stop()
@@ -44,9 +45,13 @@ class AppPresenter:
             self._hotkeys['ocr'].start(self._ocr_hotkey_pressed)
 
     def _ocr_hotkey_pressed(self):
-        self.screen_capture(True)
+        self.screen_capture(exact=True)
 
     def screen_capture(self, exact):
+        if not self._app_state.league_enchants.enabled and not self._app_state.daily_enchants.enabled:
+            self.show(keys.ErrorWindowKey('No enchant scrapes are enabled, please edit the settings.'))
+            return
+
         save_path = self._constants.data_dir / 'screenshots'
         curr_enchants = ocr.read_enchants(self._config.ocr.bounds, save_path)
 
@@ -57,21 +62,27 @@ class AppPresenter:
                 enchant = enchants.unexact_mod(enchant)
 
             league_matches = None
-            try:
-                league_matches = self._app_state.league_enchants.find_matching_enchants(enchant)
-            except errors.EnchantsNotLoaded:
-                pass
+            if self._app_state.league_enchants.enabled:
+                try:
+                    league_matches = self._app_state.league_enchants.find_matching_enchants(enchant)
+                except errors.EnchantsNotLoaded:
+                    self.show(keys.ErrorWindowKey('Enchants have not finished loading.'))
+                    return
 
             daily_matches = None
-            try:
-                daily_matches = self._app_state.daily_enchants.find_matching_enchants(enchant)
-            except errors.EnchantsNotLoaded:
-                pass
+            if self._app_state.daily_enchants.enabled:
+                try:
+                    daily_matches = self._app_state.daily_enchants.find_matching_enchants(enchant)
+                except errors.EnchantsNotLoaded:
+                    self.show(keys.ErrorWindowKey('Enchants have not finished loading.'))
+                    return
 
-            result = _Result(title=enchant, search=f'{enchant} (Helm {index})', league_result=league_matches, daily_result=daily_matches)
-            results.append(result)
+            if league_matches or daily_matches:
+                result = _Result(title=enchant, search=f'{enchant} (Helm {index})', league_result=league_matches, daily_result=daily_matches)
+                results.append(result)
 
-        self.show(keys.SearchWindowKey(results))
+        if results:
+            self.show(keys.SearchWindowKey(results, clear=self._config.ocr.clear_previous))
 
     def show(self, key: 'keys._Key'):
         if not isinstance(key, keys._Key):
