@@ -13,8 +13,8 @@ class ResultWidgetPresenter:
     def widget(self):
         return self._view
 
-    def populate_view(self, search, result):
-        self._view.set_result(search, result)
+    def populate_view(self, search, league_result, daily_result=None):
+        self._view.set_result(search, league_result, daily_result)
 
     def show(self):
         self._view.show()
