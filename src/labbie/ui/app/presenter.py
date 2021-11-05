@@ -106,7 +106,6 @@ class AppPresenter:
     def launch(self):
         self.show(keys.SystemTrayIconKey())
         self.show(keys.SearchWindowKey())
-        self.show(keys.SettingsWindowKey())
 
 
 from labbie.ui import keys  # noqa: E402
