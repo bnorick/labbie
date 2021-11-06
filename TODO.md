@@ -5,3 +5,5 @@
 - Add price checking
 - Use gzip for enchants
 - Default position for settings / errors should not be top right (maybe on top of search window?)
+- Better packaging / version bumping
+- Update functionality (auto or manual)
