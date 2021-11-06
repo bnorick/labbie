@@ -44,13 +44,14 @@ class SearchPresenter:
 
         app_state.league_enchants.attach(self, self.on_enchants_changed, to='enchants')
         app_state.daily_enchants.attach(self, self.on_enchants_changed, to='enchants')
-        self.on_enchants_changed(app_state.league_enchants)
 
         # TODO(bnorick): attach to enchants so that we can update the dropdowns when enchants change
         influences = ['Shaper', 'Elder', 'Crusader', 'Redeemer', 'Hunter', 'Warlord']
         self._view.set_influence_options(influences, influences)
         self._view.set_mods([''], None)
         self._view.set_bases([''])
+
+        self.on_enchants_changed(app_state.league_enchants)
 
     @property
     def widget(self):
@@ -94,6 +95,8 @@ class SearchPresenter:
 
     def on_enchants_changed(self, val):
         app_state = self._app_state
+
+        logger.debug(f'{app_state.league_enchants.state=} {app_state.daily_enchants.state=}')
 
         if (app_state.league_enchants.state is enchants.State.DISABLED
                 and app_state.daily_enchants.state is enchants.State.DISABLED):
@@ -142,11 +145,16 @@ class SearchPresenter:
                 pass
         self._bases = sorted(bases)
 
+        logger.debug(f'{len(self._mods)=} {len(self._bases)=}')
+
         if self._view.exact_mod:
             self._view.set_mods(self._mods, None)
         else:
             self._view.set_mods(self._unexact_mods, None)
         self._view.set_bases(self._bases)
+
+        logger.debug(f'{self._view.combo_mod.count()=}')
+        logger.debug(f'{self._view.combo_base.count()=}')
 
     def on_exact_mod(self, checked):
         mods = self._mods if checked else self._unexact_mods

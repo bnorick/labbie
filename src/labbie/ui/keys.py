@@ -51,7 +51,7 @@ class SystemTrayIconKey(_Key):
 
 @dataclasses.dataclass(frozen=True)
 class SearchWindowKey(_PopulatableKey):
-    DELETE_WHEN_CLOSED: ClassVar[bool] = True
+    DELETE_WHEN_CLOSED: ClassVar[bool] = False
     results: Union[None, result.Result, List[result.Result]] = dataclasses.field(default=None, compare=False)
     clear: bool = dataclasses.field(default=False, compare=False)
 
