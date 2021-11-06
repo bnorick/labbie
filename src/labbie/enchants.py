@@ -17,7 +17,7 @@ from labbie import mixins
 logger = loguru.logger
 _FILENAME_FORMAT = '{date:%Y-%m-%d}.json'
 _URL_FORMAT = f'https://labbie.blob.core.windows.net/enchants/{{type}}/{_FILENAME_FORMAT}'
-_VALUE_PATTERN = re.compile(r'\d+')
+_VALUE_PATTERN = re.compile(r'-?\d+')
 _HISTORICAL_DAYS = 15
 _Constants = constants.Constants
 
@@ -298,6 +298,7 @@ def load_enchants(cache_dir: pathlib.Path, date=None):
 
 def find_matching_enchants(enchants: List[Enchant], target: str):
     target = target.lower()
+    logger.info(f'{target=}')
     matches = []
     for enchant in enchants:
         for mod in enchant.mods:
