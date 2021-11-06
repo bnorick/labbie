@@ -15,12 +15,14 @@ Additional features, such as enchant statistics, will be coming in the future.
 
 Labbie was written to use on the Windows operating system, so YMMV if you choose to try with other operating systems (and I don't currently have plans to produce releases for other operating systems).
 
-## Configuration
-Labbie has some minimal configuration (with more to come in the future) which is currently accessible only by editing the config files in [config](config). A UI for configuration is a current TODO.
+## Settings
+You can choose whether to show results for league, daily, or both.
 
-Most importantly, OCR bounds (where Labbie looks for enchants on your screen) need to be set relative to your whole monitor (with 0, 0 being at the top left). This configuration is [here](https://github.com/bnorick/labbie/blob/6b3f000628a481f50a46b587902b5454abc8e490/config/config.toml#L8) in [config/config.toml](config/config.toml). The default configuration is for **1920x1080** fullscreen windowed, but the line below may be uncommented (and the initial line commented) for 1440p resolution monitors. If you have any other setup (including simply windowed mode), you'll need to figure out what bounds to use for OCR support to function.
+A hotkey can be set for screen capture, I use \` (backtick). Additionally, modifier and function keys can be specified, e.g., `shift+q` or `F1`.
 
-By default, the \` (backtick) is used as a hotkey for OCR. To disable the hotkey, set `ocr = ''`. You may also use other hotkeys such as `ocr = 'shift+q'` or `ocr = 'F1'`.
+The default screen capture configuration is for **1920x1080** fullscreen windowed. For 2560x1440 resolution, you can use `left=450, top=277, right=1225, bottom=616`. You can set your own screen capture area by manually entering the pixel offsets in the corresponding text boxes or interactively using the "Select" button in the settings window. The screen capture area should be aligned as in the following example:
+
+![Screen Capture Area Example](https://github.com/bnorick/labbie/blob/master/docs/screen_capture_area.png)
 
 ## Support Development
 Labbie requires me to host the enchant data myself, which I am doing out of my pocket. If you use the tool and love it, please consider a small donation through [Paypal](https://www.paypal.com/donate?hosted_button_id=4QXG9CPFYF5UJ) or become a patron through [Patreon](https://www.patreon.com/bnorick).

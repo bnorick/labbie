@@ -1,4 +1,4 @@
-- Make loading a bit more resilient. It seems possible that a user could kill the app while it's saving enchants to disk and corrupt the cached enchants, resulting in failed loading.
+- Make OCR a bit more reliable with some image manipulation
 - Add enchant verification to OCR
 - Add version to sys tray menu
 - Add services support
