@@ -2,7 +2,7 @@ league = true
 daily = true
 
 [ui]
-    hotkeys = { ocr = '`' }
+    hotkeys = { ocr = '' }
 
 [ocr]
     clear_previous = true

@@ -11,6 +11,7 @@ Qt = QtCore.Qt
 
 
 class TabBar(QtWidgets.QTabBar):
+
     middleClicked = QtCore.pyqtSignal(int)
 
     def __init__(self):
@@ -109,6 +110,7 @@ class SearchWidget(base.BaseWidget):
         self.setLayout(layout)
 
         self.setWindowTitle('Search Enchants')
+        self.move(QtWidgets.QApplication.instance().desktop().screen().rect().center() - self.rect().center())
 
     def on_tab_middle_click(self, index):
         self.tabs.removeTab(index)

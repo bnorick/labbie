@@ -10,9 +10,9 @@ class Hotkey(QtCore.QObject):
         self.hotkey = hotkey
 
     def start(self, handler=None):
+        keyboard.add_hotkey(self.hotkey, self.pressed.emit, suppress=True)
         if handler:
             self.pressed.connect(handler)
-        keyboard.add_hotkey(self.hotkey, self.pressed.emit, suppress=True)
 
     def stop(self, disconnect=True):
         if disconnect:

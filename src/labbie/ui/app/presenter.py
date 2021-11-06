@@ -28,11 +28,11 @@ class AppPresenter:
         self._injector = injector
         self._app_state = app_state
 
+        self.presenters = {}
+
         self._hotkeys: Dict[str, hotkey.Hotkey] = {}
         self._config.ui.hotkeys.attach(self, self._ocr_hotkey_changed, to='ocr')
         self._ocr_hotkey_changed(self._config.ui.hotkeys.ocr)
-
-        self.presenters = {}
 
     def _ocr_hotkey_changed(self, val):
         logger.debug(f'ocr hotkey changed {val=}')
@@ -41,8 +41,13 @@ class AppPresenter:
             current_hotkey.stop()
 
         if val:
-            self._hotkeys['ocr'] = hotkey.Hotkey(val)
-            self._hotkeys['ocr'].start(self._ocr_hotkey_pressed)
+            try:
+                ocr_hotkey = hotkey.Hotkey(val)
+                ocr_hotkey.start(self._ocr_hotkey_pressed)
+                self._hotkeys['ocr'] = ocr_hotkey
+            except ValueError:
+                # May be raised when hotkey can't be bound
+                self.show(keys.ErrorWindowKey(Exception(f'Unable to bind hotkey: {val}')))
 
     def _ocr_hotkey_pressed(self):
         self.screen_capture(exact=True)
@@ -52,7 +57,9 @@ class AppPresenter:
             self.show(keys.ErrorWindowKey('No enchant scrapes are enabled, please edit the settings.'))
             return
 
-        save_path = self._constants.data_dir / 'screenshots'
+        save_path = None
+        if self._constants.debug:
+            save_path = self._constants.data_dir / 'screenshots'
         curr_enchants = ocr.read_enchants(self._config.ocr.bounds, save_path)
 
         results = []

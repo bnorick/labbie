@@ -1,3 +1,7 @@
 - Make loading a bit more resilient. It seems possible that a user could kill the app while it's saving enchants to disk and corrupt the cached enchants, resulting in failed loading.
 - Add enchant verification to OCR
--
+- Add version to sys tray menu
+- Add services support
+- Add price checking
+- Use gzip for enchants
+- Default position for settings / errors should not be top right (maybe on top of search window?)
