@@ -5,5 +5,6 @@ daily = true
     hotkeys = { ocr = '`' }
 
 [ocr]
-    bounds = { left=335, top=210, right=916, bottom=455 }  # for 1920x1080 screen resolution (fullscreen windowed)
+    clear_previous = true
+    bounds = { left=335, top=207, right=923, bottom=462 }  # for 1920x1080 screen resolution (fullscreen windowed)
     # bounds = { left=450, top=277, right=1225, bottom=616 }  # for 2560x1440

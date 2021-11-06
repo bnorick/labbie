@@ -28,7 +28,7 @@ def read_enchants(bounds: _Bounds, save_path: Optional[pathlib.Path]):
     top = 0
     for i in range(enchant_count):
         piece = image.crop((0, top, width, top + height_per_enchant))
-        processed = piece.convert('L').point(lambda p: 0 if p > 105 else 255, mode='1')
+        processed = piece.convert('L').point(lambda p: 0 if p > 125 else 255, mode='1')
         top += height_per_enchant + divider_height
         if save_path:
             piece.save(save_path / f'{i}.png')
