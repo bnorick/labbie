@@ -13,6 +13,7 @@ class SystemTrayIconPresenter:
 
         self._view.set_search_triggered_handler(self.on_search_triggered)
         self._view.set_settings_triggered_handler(self.on_settings_triggered)
+        self._view.set_about_triggered_handler(self.on_about_triggered)
 
     def show(self):
         self._view.show()
@@ -22,3 +23,6 @@ class SystemTrayIconPresenter:
 
     def on_settings_triggered(self):
         self._app_presenter.show(keys.SettingsWindowKey())
+
+    def on_about_triggered(self):
+        self._app_presenter.show(keys.AboutWindowKey())

@@ -110,7 +110,7 @@ class SearchWidget(base.BaseWidget):
         self.setLayout(layout)
 
         self.setWindowTitle('Search Enchants')
-        self.move(QtWidgets.QApplication.instance().desktop().screen().rect().center() - self.rect().center())
+        self.center_on_screen(adjust_size=False)
 
     def on_tab_middle_click(self, index):
         self.tabs.removeTab(index)

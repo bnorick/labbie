@@ -7,6 +7,7 @@ from typing import ClassVar, List, Union
 import injector
 
 from labbie import result
+from labbie.ui.about.window import presenter as about
 from labbie.ui.system_tray import presenter as system_tray
 from labbie.ui.search.window import presenter as search
 from labbie.ui.settings.window import presenter as settings
@@ -80,3 +81,11 @@ class SettingsWindowKey(_Key):
 
     def get_presenter(self, injector: injector.Injector):
         return injector.get(settings.SettingsWindowPresenter)
+
+
+@dataclasses.dataclass(frozen=True)
+class AboutWindowKey(_Key):
+    DELETE_WHEN_CLOSED: ClassVar[bool] = True
+
+    def get_presenter(self, injector: injector.Injector):
+        return injector.get(about.AboutWindowPresenter)

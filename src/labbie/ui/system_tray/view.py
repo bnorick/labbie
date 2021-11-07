@@ -4,7 +4,7 @@ import qasync
 from PyQt5 import QtGui
 from PyQt5 import QtWidgets
 
-from labbie.ui import utils
+from labbie.ui import utils as utils
 
 
 class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
@@ -16,9 +16,9 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
 
         self.action_search = self.menu.addAction('Search')
         self.action_settings = self.menu.addAction('Settings')
-
-        exit_action = self.menu.addAction('Exit')
-        exit_action.triggered.connect(self.exit)
+        self.action_about = self.menu.addAction('About')
+        action_exit = self.menu.addAction('Exit')
+        action_exit.triggered.connect(self.exit)
         self.setContextMenu(self.menu)
 
     def exit(self):
@@ -29,6 +29,9 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
 
     def set_settings_triggered_handler(self, handler):
         self._connect_signal_to_slot(self.action_settings.triggered, handler)
+
+    def set_about_triggered_handler(self, handler):
+        self._connect_signal_to_slot(self.action_about.triggered, handler)
 
     @staticmethod
     def _connect_signal_to_slot(signal, slot):

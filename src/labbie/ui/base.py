@@ -77,6 +77,11 @@ class BaseWindow(windows.ModernWindow):
 class BaseWidget(QtWidgets.QWidget):
     signal_close = QtCore.pyqtSignal(name='close')
 
+    def center_on_screen(self, adjust_size=True):
+        if adjust_size:
+            self.adjustSize()
+        self.move(QtWidgets.QApplication.instance().desktop().screen().rect().center() - self.rect().center())
+
     @staticmethod
     def _connect_signal_to_slot(signal, slot):
         if inspect.iscoroutinefunction(slot):
