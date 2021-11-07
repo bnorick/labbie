@@ -1,3 +1,5 @@
+import atexit
+
 import injector
 
 from labbie.ui import keys
@@ -17,6 +19,13 @@ class SystemTrayIconPresenter:
 
     def show(self):
         self._view.show()
+        atexit.register(self.try_to_hide)
+
+    def try_to_hide(self):
+        try:
+            self._view.hide()
+        except RuntimeError:
+            pass
 
     def on_search_triggered(self):
         self._app_presenter.show(keys.SearchWindowKey())

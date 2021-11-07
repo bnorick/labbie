@@ -44,13 +44,14 @@ def relaunch(debug, exit_fn=None):
         from labbie import __main__ as main
         cmd.append(main.__file__)
     else:
-        cmd.append(sys.argv[0])
+        cmd.append(f'"{sys.argv[0]}"')
     if debug:
         cmd.append('--debug')
     if not getattr(sys, 'frozen', False):
         cmd.insert(0, f'"{sys.executable}"')
-    print(f'{sys.argv=}')
-    print(f'{cmd=}')
+
+    logger.info(f'{sys.argv=}')
+    logger.info(f'{cmd=}')
     atexit.register(os.execv, sys.executable, cmd)
     if exit_fn:
         exit_fn()
@@ -66,7 +67,7 @@ def exit_if_already_running():
     mm = instances_shm()
     if mm[0] > 0:
         mm[0] += 1
-        print(f'Labbie is already running, instances={mm[0]}')
+        logger.info(f'Labbie is already running, instances={mm[0]}')
         sys.exit()
 
 

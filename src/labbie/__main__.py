@@ -70,7 +70,7 @@ async def focus_if_other_instances(app_presenter):
     mm[0] = 1
     while True:
         if mm[0] > 1:
-            print(f'instances={mm[0]}')
+            logger.info(f'instances={mm[0]}')
             app_presenter.foreground()
             mm[0] = 1
         await asyncio.sleep(0.1)

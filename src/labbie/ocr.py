@@ -23,7 +23,7 @@ def read_enchants(bounds: _Bounds, save_path: Optional[pathlib.Path]):
     height = bounds.bottom - bounds.top - divider_height * (enchant_count - 1)
     height_per_enchant = height // 5
     width = bounds.right - bounds.left
-    image = ImageGrab.grab(bounds.as_tuple())
+    image = ImageGrab.grab(bounds.as_tuple(), all_screens=True)
     if save_path:
         image.save(save_path / 'full.png')
     enchants = []
