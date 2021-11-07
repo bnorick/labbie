@@ -1,3 +1,4 @@
+import datetime
 from typing import Any, Dict
 
 import loguru
@@ -59,7 +60,8 @@ class AppPresenter:
 
         save_path = None
         if self._constants.debug:
-            save_path = self._constants.data_dir / 'screenshots'
+            save_path = self._constants.screenshots_dir / datetime.datetime.now().strftime('%Y-%m-%d_%H%M%S')
+            save_path.mkdir(exist_ok=True)
         curr_enchants = ocr.read_enchants(self._config.ocr.bounds, save_path)
 
         results = []
@@ -112,6 +114,9 @@ class AppPresenter:
 
     def launch(self):
         self.show(keys.SystemTrayIconKey())
+        self.show(keys.SearchWindowKey())
+
+    def foreground(self):
         self.show(keys.SearchWindowKey())
 
 

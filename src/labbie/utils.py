@@ -1,3 +1,6 @@
+import atexit
+import mmap
+import os
 import pathlib
 import sys
 
@@ -15,6 +18,10 @@ def root_dir():
         return pathlib.Path(__file__).parent.parent.parent
 
 
+def logs_dir():
+    return root_dir() / 'logs'
+
+
 def assets_dir():
     return root_dir() / 'assets'
 
@@ -29,6 +36,38 @@ def default_config_dir():
 
 def default_data_dir():
     return root_dir() / 'data'
+
+
+def relaunch(debug, exit_fn=None):
+    cmd = []
+    if sys.argv[0] == 'labbie':
+        from labbie import __main__ as main
+        cmd.append(main.__file__)
+    else:
+        cmd.append(sys.argv[0])
+    if debug:
+        cmd.append('--debug')
+    if not getattr(sys, 'frozen', False):
+        cmd.insert(0, f'"{sys.executable}"')
+    print(f'{sys.argv=}')
+    print(f'{cmd=}')
+    atexit.register(os.execv, sys.executable, cmd)
+    if exit_fn:
+        exit_fn()
+    else:
+        sys.exit(0)
+
+
+def instances_shm():
+    return mmap.mmap(-1, 1, 'labbie_instances')
+
+
+def exit_if_already_running():
+    mm = instances_shm()
+    if mm[0] > 0:
+        mm[0] += 1
+        print(f'Labbie is already running, instances={mm[0]}')
+        sys.exit()
 
 
 class LogFilter:

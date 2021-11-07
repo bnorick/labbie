@@ -1,5 +1,6 @@
+import argparse
 import asyncio
-import pathlib
+import os
 import sys
 
 import injector
@@ -10,8 +11,6 @@ import qasync
 
 from labbie import config
 from labbie import constants
-from labbie import enchants
-from labbie import errors
 from labbie import state
 from labbie import utils
 from labbie.di import module
@@ -26,9 +25,22 @@ _Config = config.Config
 _Constants = constants.Constants
 
 
+def parse_args():
+    parser = argparse.ArgumentParser('Labbie')
+    parser.add_argument('--debug', action='store_true', help='Enable debug mode')
+    return parser.parse_args()
+
+
 def main():
+    utils.logs_dir().mkdir(exist_ok=True, parents=True)
+    utils.exit_if_already_running()
+
+    args = parse_args()
+    if args.debug:
+        os.environ['LABBIE_DEBUG'] = '1'
+
     logger.remove()
-    log_path = utils.root_dir() / 'logs' / 'current_run.log'
+    log_path = utils.logs_dir() / 'current_run.log'
     if log_path.is_file():
         prev_log_path = log_path.with_name('prev_run.log')
         if prev_log_path.is_file():
@@ -53,6 +65,17 @@ def main():
         sys.exit(loop.run_forever())
 
 
+async def focus_if_other_instances(app_presenter):
+    mm = utils.instances_shm()
+    mm[0] = 1
+    while True:
+        if mm[0] > 1:
+            print(f'instances={mm[0]}')
+            app_presenter.foreground()
+            mm[0] = 1
+        await asyncio.sleep(0.1)
+
+
 async def start(log_filter):
     injector = _Injector(_Module())
 
@@ -62,7 +85,7 @@ async def start(log_filter):
         log_filter.level = 'DEBUG'
 
     # ensure directories exist
-    (constants.data_dir / 'screenshots').mkdir(parents=True, exist_ok=True)
+    constants.screenshots_dir.mkdir(parents=True, exist_ok=True)
     (constants.helm_enchants_dir / 'league').mkdir(parents=True, exist_ok=True)
     (constants.helm_enchants_dir / 'daily').mkdir(parents=True, exist_ok=True)
 
@@ -76,6 +99,7 @@ async def start(log_filter):
 
     app_presenter = injector.get(app.AppPresenter)
     app_presenter.launch()
+    asyncio.create_task(focus_if_other_instances(app_presenter))
 
 
 if __name__ == '__main__':

@@ -1,5 +1,7 @@
 import pathlib
-from typing import Union
+from typing import Tuple, Union
+
+from PyQt5 import QtGui
 
 from labbie import utils
 
@@ -12,6 +14,17 @@ def fix_taskbar_icon():
     import ctypes
     myappid = 'labbie.0.1.0'  # arbitrary string
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+
+
+def recolored_icon(asset, rgb: Union[int, Tuple[int, int, int]]):
+    img = QtGui.QPixmap(str(asset_path(asset)))
+    qp = QtGui.QPainter(img)
+    qp.setCompositionMode(QtGui.QPainter.CompositionMode_SourceIn)
+    if isinstance(rgb, int):
+        rgb = (rgb, rgb, rgb)
+    qp.fillRect(img.rect(), QtGui.QColor.fromRgb(*rgb))
+    qp.end()
+    return QtGui.QIcon(img)
 
 
 class CheckboxProperty:

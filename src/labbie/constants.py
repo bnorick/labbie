@@ -1,4 +1,5 @@
 import dataclasses
+import functools
 import os
 import pathlib
 from typing import ClassVar, Union
@@ -47,12 +48,12 @@ class BaseConstants(mixins.SerializableMixin):
             else:
                 raise ValueError(f'Invalid kwarg "{name}", no such field.')
 
-        env_prefix = 'aloe_'
+        env_prefix = 'labbie_'
         if extra_prefix := getattr(cls, '_ENV_PREFIX', None):
             env_prefix += f'{extra_prefix.lower()}_'
         for name, val in os.environ.items():
             if name.lower().startswith(env_prefix):
-                field_name = name[len(env_prefix):]  # remove the prefix
+                field_name = name.lower()[len(env_prefix):]  # remove the prefix
                 if field_name in valid_names:
                     logger.info(f'Overriding constant "{cls.__name__}.{field_name}" from environment variable ({name}), {val=}.')
                     explicit_vals[field_name] = val
@@ -88,7 +89,11 @@ class BaseConstants(mixins.SerializableMixin):
 
     @classmethod
     def from_dict(cls, d):
-        return super().from_dict(d, config=dacite.Config(cast=[pathlib.Path]))
+        config = dacite.Config(
+            cast=[pathlib.Path],
+            type_hooks={bool: lambda v: v if isinstance(v, bool) else v.lower() in ('t', 'true', '1')}
+        )
+        return super().from_dict(d, config=config)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -100,9 +105,17 @@ class Constants(BaseConstants):
     config_dir: pathlib.Path = _DEFAULT_CONFIG_DIR
     user_agent: str = f'Labbie v{version.__version__}'
 
-    @property
+    @functools.cached_property
+    def logs_dir(self):
+        return utils.logs_dir()
+
+    @functools.cached_property
     def helm_enchants_dir(self):
         return self.data_dir / 'helm'
+
+    @functools.cached_property
+    def screenshots_dir(self):
+        return self.data_dir / 'screenshots'
 
     @classmethod
     def from_toml(cls, path: pathlib.Path, overrides=None):
