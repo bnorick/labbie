@@ -95,7 +95,8 @@ class SettingsPresenter:
         self._view.close()
 
     def cleanup(self):
-        self._screen_selection_view.close()
+        if self._screen_selection_view:
+            self._screen_selection_view.close()
 
     # def populate_view(self, results: Union[None, search_result.Result, List[search_result.Result]], base=False):
     #     logger.debug(f'{results=}')
