@@ -75,16 +75,17 @@ class ObservableMixin:
                         self._event_observer_handlers[event].discard(observer_handlers)
                         observer_handlers.event_handlers.pop(event, None)
 
-    def notify(self, **kwargs):
+    def notify(self, _log=True, **kwargs):
         if kwargs:
             for event, args in kwargs.items():
                 if not isinstance(args, tuple):
                     args = (args, )
-                logger.debug(f'{self.__class__.__module__}.{self.__class__.__name__} notify, {event=} {args=}')
+                if _log:
+                    logger.debug(f'{self.__class__.__module__}.{self.__class__.__name__} notify, {event=} {args=}')
                 for handler in self._event_observer_handlers[event]:
                     handler.event_handlers[event](*args)
-
-        logger.debug(f'{self.__class__.__module__}.{self.__class__.__name__} generic notify')
+        if _log:
+            logger.debug(f'{self.__class__.__module__}.{self.__class__.__name__} generic notify')
         # generic notify to call generic handler
         for handler in self._generic_observer_handlers:
             handler.generic_handler(self)

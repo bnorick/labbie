@@ -1,5 +1,4 @@
-import itertools
-from typing import List, Union
+import asyncio
 
 import injector
 import loguru
@@ -73,14 +72,14 @@ class SettingsPresenter:
         if self._view.league != self._config.league:
             self._config.league = self._view.league
             if self._config.league:
-                await self._app_state.league_enchants.download_or_load(self._constants)
+                asyncio.create_task(self._app_state.league_enchants.download_or_load(self._constants))
             else:
                 self._app_state.league_enchants.set_enchants(None, None)
 
         if self._view.daily != self._config.daily:
             self._config.daily = self._view.daily
             if self._config.daily:
-                await self._app_state.daily_enchants.download_or_load(self._constants)
+                asyncio.create_task(self._app_state.daily_enchants.download_or_load(self._constants))
             else:
                 self._app_state.daily_enchants.set_enchants(None, None)
 
@@ -96,7 +95,7 @@ class SettingsPresenter:
         self._view.close()
 
     def cleanup(self):
-        pass
+        self._screen_selection_view.close()
 
     # def populate_view(self, results: Union[None, search_result.Result, List[search_result.Result]], base=False):
     #     logger.debug(f'{results=}')
