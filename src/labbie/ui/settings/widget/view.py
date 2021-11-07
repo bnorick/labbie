@@ -108,7 +108,7 @@ class SettingsWidget(base.BaseWidget):
         self.btn_cancel.clicked.connect(self.close)
 
         self.setWindowTitle('Settings')
-        self.setFixedSize(layout.sizeHint())
+        self.center_on_screen()
 
     def set_select_bounds_handler(self, handler):
         self._connect_signal_to_slot(self.btn_select_bounds.clicked, handler)

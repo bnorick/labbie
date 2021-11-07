@@ -27,7 +27,7 @@ class ErrorWidget(base.BaseWidget):
         self.btn_ok.clicked.connect(self.close)
 
         self.setWindowTitle('Error')
-        self.setFixedSize(layout.sizeHint())
+        self.center_on_screen()
 
     def set_error(self, error: str):
         self.lbl_error.setText(error)

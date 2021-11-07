@@ -3,7 +3,7 @@
 - Add enchant verification to OCR
 - Add services support
 - Add price checking
-- Default position for settings / errors should not be top right (maybe on top of search window?)
 - Better packaging / version bumping
 - Self update functionality (auto or manual)
 - Scrape / Add boot enchants
+- Remember window locations
