@@ -62,7 +62,8 @@ class AppPresenter:
         if self._constants.debug:
             save_path = self._constants.screenshots_dir / datetime.datetime.now().strftime('%Y-%m-%d_%H%M%S')
             save_path.mkdir(exist_ok=True)
-        curr_enchants = ocr.read_enchants(self._config.ocr.bounds, save_path)
+        
+        curr_enchants = ocr.read_enchants(self._config.ocr.bounds, save_path, self._constants.dilate)
 
         results = []
         # TODO: make this work for gloves/boots?

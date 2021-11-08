@@ -180,7 +180,7 @@ class Enchants(mixins.ObservableMixin):
 
             while True:
                 logger.info(f'checking if fresh {self.type} scrape is downloadable')
-                available = last_downloadable_date(constants.user_agent, self.type, 1)
+                available = await last_downloadable_date(constants.user_agent, self.type, 1)
                 if available:
                     self.state = State.DOWNLOADING
                     date, enchants = await download(cache_dir, self.type, constants.user_agent,

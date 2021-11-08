@@ -104,6 +104,7 @@ class Constants(BaseConstants):
     data_dir: pathlib.Path = _DEFAULT_DATA_DIR
     config_dir: pathlib.Path = _DEFAULT_CONFIG_DIR
     user_agent: str = f'Labbie v{version.__version__}'
+    dilate: bool = False
 
     @functools.cached_property
     def logs_dir(self):

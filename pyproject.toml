@@ -17,6 +17,8 @@ keyboard = "^0.13.5"
 dacite = "^1.6.0"
 toml = "^0.10.2"
 orjson = "^3.6.4"
+numpy = "^1.21.4"
+opencv-python-headless = "^4.5.4"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
