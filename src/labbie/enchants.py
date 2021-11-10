@@ -7,7 +7,7 @@ import gzip
 import io
 import pathlib
 import re
-from typing import List, NamedTuple, Optional, Set
+from typing import List, NamedTuple, Optional
 
 import aiohttp
 import loguru
@@ -20,10 +20,7 @@ from labbie import mixins
 logger = loguru.logger
 _FILENAME_FORMAT = '{date:%Y-%m-%d}.json.gz'
 _URL_FORMAT = f'https://labbie.blob.core.windows.net/enchants/{{type}}/{_FILENAME_FORMAT}'
-_BLOB_URL_FORMAT = f'https://labbie.blob.core.windows.net/enchants/{{file_name}}'
-_MOD_FILE_NAME = 'mods.json.gz'
-_REQUIRED_FILES = [_MOD_FILE_NAME]
-_VALUE_PATTERN = re.compile(r'-?\d*\.?\d+')
+_VALUE_PATTERN = re.compile(r'-?\d+')
 _HISTORICAL_DAYS = 15
 _REFRESH_DELAY = 5 * 60  # 5 minutes
 _Constants = constants.Constants
@@ -307,21 +304,6 @@ async def download(cache_dir: pathlib.Path, type_: str, user_agent: str, past_da
         logger.error(f'no data found for the last {past_days} days, aborting')
         # if nothing was found for the window, raise
         raise errors.EnchantDataNotFound
-
-
-async def get_blob_file_md5(file_name: str, user_agent: str):
-    async with aiohttp.ClientSession(headers={'User-Agent': user_agent}) as session:
-        async with session.head(_BLOB_URL_FORMAT.format(file_name=file_name)) as resp:
-            return resp.headers.get('Content-MD5')
-
-
-async def download_and_save_blob_data(file_save_path: pathlib.Path, url: str, user_agent: str,):
-    async with aiohttp.ClientSession(headers={'User-Agent': user_agent}) as session:
-        async with session.get(url) as resp:
-            content = await resp.content.read()
-            with file_save_path.open('wb') as f:
-                f.write(content)
-            return resp.headers.get('Content-MD5')
 
 
 def load_enchants(cache_dir: pathlib.Path, date=None):
