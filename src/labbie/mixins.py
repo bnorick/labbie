@@ -1,14 +1,20 @@
 import collections
 import copy
 import dataclasses
+import enum
 from typing import Any, Callable, Dict, Iterable, Optional, Sequence, Set, Union
 
 import dacite
 import loguru
 
-from labbie import sentinels
-
 logger = loguru.logger
+
+
+class Sentinel(enum.Enum):
+    NOT_LOADED = enum.auto()
+    NOT_SET = enum.auto()
+    NOT_CONFIGURED = enum.auto()
+    DEFAULT = enum.auto()
 
 
 @dataclasses.dataclass
@@ -125,7 +131,7 @@ class SerializableMixin:
         # safe to just remove it
         d = {}
         for k, v in result:
-            if k.startswith('_') or v is sentinels.Sentinel.NOT_LOADED:
+            if k.startswith('_') or v is Sentinel.NOT_LOADED:
                 continue
             d[k] = v
         return d

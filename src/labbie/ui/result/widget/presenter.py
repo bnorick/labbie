@@ -149,22 +149,30 @@ class ResultWidgetPresenter:
     def widget(self):
         return self._view
 
-    def populate_view(self, result: result.Result, base):
+    def populate_view(self, result: result.Result):
         self._mod = result.search
 
         league_results = None
         if result.league_result is not None:
-            league_results = self._build_display_results(result.league_result)
+            if result.base:
+                league_results = self._build_base_search_display_results(result.league_result)
+            else:
+                league_results = self._build_enchant_search_display_results(result.league_result)
 
         daily_results = None
         if result.daily_result is not None:
-            daily_results = self._build_display_results(result.daily_result)
+            if result.base:
+                daily_results = self._build_base_search_display_results(result.daily_result)
+            else:
+                daily_results = self._build_enchant_search_display_results(result.daily_result)
 
-        result_str = result.league_summary(base) or ''
+        result_str = result.league_summary(result.base) or ''
         if result_str:
             result_str += '\n\n'
-        result_str += result.daily_summary(base)
+        result_str += result.daily_summary(result.base)
 
+        if result.base:
+            self._view.set_price_check_visible(False)
         self._view.set_results(
             result.search,
             league_results,
@@ -379,7 +387,44 @@ class ResultWidgetPresenter:
 
         return context_menu_items
 
-    def _build_display_results(self, results: List[enchants.Enchant]):
+    def _build_base_search_display_results(self, results: List[enchants.Enchant]):
+        enchants = collections.Counter()
+
+        for enchant in results:
+            for mod in enchant.mods:
+                if mod not in self._mods.helm_mods:
+                    continue
+                enchants[mod] += 1
+
+        display_results = []
+        for index, (enchant, count) in enumerate(enchants.most_common()):
+            display_result = view.DisplayResult(
+                count=count,
+                text=enchant,
+                data=None
+            )
+            display_result.index = index  # this is not a constructor arg, needs to be set here
+            display_results.append(display_result)
+
+        return (len(results), display_results)
+
+    def on_price_check(self):
+        mod_info = self._mods.helm_mod_info.get(self._mod)
+        if mod_info is None:
+            logger.error(f'Unable to find helm mod info for "{self._mod}"')
+            return
+
+        if mod_info.trade_stat_id is None:
+            logger.error(f'No trade stat id for "{self._mod}" {mod_info=}')
+            return
+
+        selected: List[view.DisplayResult] = self._view.get_selected_data()
+        delay = 0
+        for index, result in enumerate(selected):
+            delay = index // 3 * 5.25
+            webbrowser.open_new_tab(result.data.price_check_url(mod_info.trade_stat_id, mod_info.trade_stat_value, delay))
+
+    def _build_enchant_search_display_results(self, results: List[enchants.Enchant]):
         all_bases = collections.Counter()
         rare_bases = collections.defaultdict(list)
 

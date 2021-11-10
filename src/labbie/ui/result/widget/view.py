@@ -254,6 +254,9 @@ class ResultWidget(base.BaseWidget):
     #     text = '<br />'.join(text)
     #     self.lbl_selected_stats.setText(text)
 
+    def set_price_check_visible(self, visible: bool):
+        self.btn_price_check.setVisible(visible)
+
     def set_results(self, title, league_results: Optional[Tuple[int, List[DisplayResult]]],
                     daily_results: Optional[Tuple[int, List[DisplayResult]]], results_str: str,
                     selection_changed_handler: Callable):
