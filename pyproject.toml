@@ -20,6 +20,7 @@ orjson = "^3.6.4"
 numpy = "^1.21.4"
 opencv-python-headless = "^4.5.4"
 pyperclip = "^1.8.2"
+datrie = "^0.8.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
