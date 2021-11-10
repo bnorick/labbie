@@ -64,12 +64,9 @@ class SearchWidget(base.BaseWidget):
         layout_mod = QtWidgets.QHBoxLayout()
         layout_mod.addWidget(lbl_mod)
         layout_mod.addWidget(self.combo_mod, 1)
-
-        layout_mod_search = QtWidgets.QHBoxLayout()
-        layout_mod_search.addWidget(self.btn_search_mod, 1)
+        layout_mod.addWidget(self.btn_search_mod)
 
         layout_mod_section.addLayout(layout_mod)
-        layout_mod_section.addLayout(layout_mod_search)
 
         layout_base_section = QtWidgets.QVBoxLayout()
 
@@ -80,12 +77,9 @@ class SearchWidget(base.BaseWidget):
         layout_base.addWidget(self.edit_ilvl)
         layout_base.addWidget(lbl_influence)
         layout_base.addWidget(self.chkcombo_influences)
-
-        layout_base_search = QtWidgets.QHBoxLayout()
-        layout_base_search.addWidget(self.btn_search_base, 1)
+        layout_base.addWidget(self.btn_search_base)
 
         layout_base_section.addLayout(layout_base)
-        layout_base_section.addLayout(layout_base_search)
 
         layout_screen_capture = QtWidgets.QHBoxLayout()
         layout_screen_capture.addWidget(self.btn_all)

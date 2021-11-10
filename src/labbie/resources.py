@@ -1,11 +1,11 @@
 import asyncio
 import gzip
 import pathlib
-from re import S
-from typing import Optional, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import aiohttp
 import injector
+from loguru import logger
 import orjson
 
 from labbie import constants
@@ -57,8 +57,9 @@ class ResourceManager:
     def __init__(self, constants: _Constants, app_state: state.AppState):
         self._constants = constants
         self._app_state = app_state
-        self.trade = None
-        self.mods = None
+        self.trade_stats: Dict[str, str] = None
+        self.items: Dict[str, List[Tuple[bool, str, str]]] = None
+        self.mods: Dict[str, Dict[str, List[List[Union[str, int]]]]] = None
         self._init_task = None
 
     def initialize(self):
@@ -69,7 +70,8 @@ class ResourceManager:
         # TODO(bnorick): handle PermissionError / OSError from disk write failures in a reasonable way
 
         async with aiohttp.ClientSession() as session:
-            self.trade = await self.load_or_download_resource('trade.json.gz', session=session)
+            self.trade_stats = await self.load_or_download_resource('trade_stats.json.gz', session=session)
+            self.items = await self.load_or_download_resource('trade_items.json.gz', session=session)
             self.mods = await self.load_or_download_resource('mods.json.gz', session=session)
         self._app_state.resources_ready = True
 
@@ -78,8 +80,12 @@ class ResourceManager:
             async with session.head(f'{_CONTAINER_URL}/{resource_path}') as resp:
                 if resp.status == 404:
                     return True
+                cached_hash = self.cached_resource_hash(resource_path)
+                remote_hash = resp.headers['Content-MD5']
+                needs_update = cached_hash != remote_hash
+                logger.debug(f'{resource_path=} {needs_update=} {cached_hash=}{"==" if not needs_update else "!="}{remote_hash=}')
 
-                return self.cached_resource_hash(resource_path) != resp.headers['Content-MD5']
+                return needs_update
 
     def cached_resource_hash(self, resource_path: _PathLike):
         local_resource_path = self.local_resource_path(resource_path)
@@ -102,11 +108,12 @@ class ResourceManager:
                         raise errors.FailedToDownloadResource(remote_resource)
 
                     content = await resp.content.read()
-                    self.save(resource_path, content)
+                    hash = resp.headers['Content-MD5']
+                    self.save(resource_path, content, hash)
 
         return self.load(resource_path)
 
-    def save(self, resource_path: _PathLike, content: Union[str, bytes]):
+    def save(self, resource_path: _PathLike, content: Union[str, bytes], hash: str):
         kwargs = {}
         if isinstance(content, str):
             mode = 'w'
@@ -119,6 +126,11 @@ class ResourceManager:
         local_resource_path = self.local_resource_path(resource_path)
         with local_resource_path.open(mode, **kwargs) as f:
             f.write(content)
+
+        hash_path = local_resource_path.parent / f'{local_resource_path.name}.md5'
+        with hash_path.open('w', encoding='utf8') as f:
+            f.write(hash)
+
 
     def load(self, resource_path: _PathLike):
         local_resource_path = self.local_resource_path(resource_path)

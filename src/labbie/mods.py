@@ -1,40 +1,79 @@
-from typing import Dict, Optional, Tuple
+import dataclasses
+import functools
+from typing import Dict, Optional, Tuple, Union
 
 import injector
 import loguru
 
 from labbie import resources
+from labbie import trade
 
 logger = loguru.logger
+
+
+@dataclasses.dataclass
+class HelmModInfo:
+    mod: str
+    trade_text: Optional[str]
+    trade_stat_id: Optional[str]
+    trade_stat_value: Union[None, int, float]
 
 
 @injector.singleton
 class Mods:
 
     @injector.inject
-    def __init__(self, resource_manager: resources.ResourceManager):
+    def __init__(self, resource_manager: resources.ResourceManager, trade_: trade.Trade):
         self._resource_manager = resource_manager
-        self._mods = resource_manager.mods
+        self._trade = trade_
 
-        self.helm_mod_to_trade_text = self._build_mod_to_trade_text(self._mods['helm'])
+        self._raw_mods = resource_manager.mods
 
-    def _build_mod_to_trade_text(self, mods: Dict[str, Tuple[str, Optional[int]]]):
+        print(self._raw_mods)
+        self.helm_mod_info = self._build_helm_mod_info(self._raw_mods['helmet'])  # exact mod -> HelmModInfo
+
+    @functools.cached_property
+    def helm_mods(self):
+        return sorted(self.helm_mod_info.keys())
+
+    def _build_helm_mod_info(self, mods: Dict[str, Tuple[str, Optional[int]]]) -> Dict[str, HelmModInfo]:
         result = {}
-        for mod_format, (slot_entry, value) in mods.items():
+        for mod_format, (slot_patterns, values) in mods.items():
             if '{' not in mod_format:
-                result[mod_format] = mod_format
+                trade_text = mod_format.lower()
+                result[mod_format] = HelmModInfo(
+                    mod=mod_format,
+                    trade_text=trade_text,
+                    trade_stat_id=self._trade.text_to_stat_id.get(trade_text),
+                    trade_stat_value=None
+                )
                 continue
 
-            slotted = mod_format.format(slot_entry)
-            if slotted in self._resource_manager.trade:
+            # if # ocurrs in mod_format we need to rethink some logic below
+            assert '#' not in mod_format
+
+            slotted = mod_format.format(*slot_patterns).lower()
+            if slotted in self._trade.text_to_stat_id:
                 trade_text = slotted
-            elif (hash_only_slotted := mod_format.format('#')) in self._resource_manager.trade:
+            elif (hash_only_slotted := mod_format.format('#', '#').lower()) in self._trade.text_to_stat_id:
                 trade_text = hash_only_slotted
             else:
-                logger.debug(f'Unable to find trade text for {mod_format=}')
-                continue
+                logger.debug(f'Unable to find trade text for {mod_format=} {slotted=} {hash_only_slotted=}')
+                trade_text = None
 
-            mod = slotted.replace('#', value)
-            result[mod] = trade_text
+            if len(values) == 1:
+                trade_stat_value = values[0]
+            elif len(values) == 2:
+                trade_stat_value = sum(values) / 2
+            else:
+                raise ValueError(f'{mod_format=} has an unexpected number of values - {len(values)=} {values=}')
+
+            slot_values = [pattern.replace('#', str(value)) for pattern, value in zip(slot_patterns, values)]
+            mod = mod_format.format(*slot_values)
+            result[mod] = HelmModInfo(
+                mod=mod,
+                trade_text=trade_text,
+                trade_stat_id=self._trade.text_to_stat_id.get(trade_text),
+                trade_stat_value=trade_stat_value
+            )
         return result
-

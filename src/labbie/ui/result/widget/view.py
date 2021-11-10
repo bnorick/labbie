@@ -321,8 +321,9 @@ class ResultWidget(base.BaseWidget):
         list_results.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
         list_results.setContextMenuPolicy(Qt.CustomContextMenu)
 
-        for result in results:
-            self._add_result_to_list(result, list_results)
+        if results:
+            for result in results:
+                self._add_result_to_list(result, list_results)
         else:
             item = QtWidgets.QListWidgetItem('No results')
             item.setFlags(item.flags() & ~Qt.ItemIsSelectable)

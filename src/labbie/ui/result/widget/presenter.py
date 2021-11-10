@@ -14,7 +14,6 @@ from labbie import mods
 from labbie import result
 from labbie.ui.result.widget import view
 
-_Mods = mods.Mods
 logger = loguru.logger
 _HTML_PAYLOAD_FORMAT = '''<html>
 <body>
@@ -61,9 +60,14 @@ class ResultData:
         stats = [
             {
                 'type': 'and',
-                'filters': [{'id': enchant_stat_id, 'min': enchant_stat_value, 'max': enchant_stat_value}]
+                'filters': [{'id': enchant_stat_id}]
             }
         ]
+        if enchant_stat_value is not None:
+            stats[0]['filters'][0].update(
+                min=enchant_stat_value,
+                max=enchant_stat_value
+            )
 
         query = {
             'status': {
@@ -110,8 +114,8 @@ class ResultData:
         query_string = parse.urlencode({'q': json.dumps(search)}, quote_via=parse.quote)
         return f'https://www.pathofexile.com/trade/search/Scourge?{query_string}'
 
-    def price_check_url(self, enchant_stat, enchant_value, delay=0):
-        search_url = self.build_search_url(enchant_stat, enchant_value)
+    def price_check_url(self, enchant_stat_id, enchant_value, delay=0):
+        search_url = self.build_search_url(enchant_stat_id, enchant_value)
         logger.debug(f'{search_url=}')
         html = _HTML_PAYLOAD_FORMAT.format(delay=delay, url=search_url, search=self)
         payload = base64.b64encode(html.encode('utf8'))
@@ -121,9 +125,11 @@ class ResultData:
 class ResultWidgetPresenter:
 
     @injector.inject
-    def __init__(self, mods: _Mods, view: view.ResultWidget):
+    def __init__(self, mods_: mods.Mods, view: view.ResultWidget):
         self._view = view
-        self._helm_mod_to_trade_text = mods.helm_mod_to_trade_text
+        self._mods = mods_
+
+        self._mod = None
 
         # NOTE: connecting the clicked signal to self.on_price_check directly as the slot wasn't working
         # for some reason, no clue.
@@ -134,6 +140,8 @@ class ResultWidgetPresenter:
         return self._view
 
     def populate_view(self, result: result.Result, base):
+        self._mod = result.search
+
         league_results = None
         if result.league_result is not None:
             league_results = self._build_display_results(result.league_result)
@@ -388,11 +396,20 @@ class ResultWidgetPresenter:
         return (len(results), display_results)
 
     def on_price_check(self):
+        mod_info = self._mods.helm_mod_info.get(self._mod)
+        if mod_info is None:
+            logger.error(f'Unable to find helm mod info for "{self._mod}"')
+            return
+
+        if mod_info.trade_stat_id is None:
+            logger.error(f'No trade stat id for "{self._mod}" {mod_info=}')
+            return
+
         selected: List[view.DisplayResult] = self._view.get_selected_data()
         delay = 0
         for index, result in enumerate(selected):
             delay = index // 3 * 5.25
-            webbrowser.open_new_tab(result.data.price_check_url(delay))
+            webbrowser.open_new_tab(result.data.price_check_url(mod_info.trade_stat_id, mod_info.trade_stat_value, delay))
 
     def on_selection_changed(self):
         pass
