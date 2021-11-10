@@ -102,16 +102,6 @@ class Enchants(mixins.ObservableMixin):
         self.date = date
         self.notify(enchants=enchants, date=date, _log=False)
 
-    # def load(self, path):
-    #     # TODO: make this async
-    #     try:
-    #         date, enchants_ = load_enchants(path)
-    #         self.date = date
-    #         self.set_enchants(date, enchants_)
-    #     except errors.EnchantDataNotFound:
-    #         self.state = State.MISSING
-    #         raise
-
     def refresh_needed(self):
         return self.date != datetime.date.today()
 
@@ -180,7 +170,7 @@ class Enchants(mixins.ObservableMixin):
 
             while True:
                 logger.info(f'checking if fresh {self.type} scrape is downloadable')
-                available = last_downloadable_date(constants.user_agent, self.type, 1)
+                available = await last_downloadable_date(constants.user_agent, self.type, 1)
                 if available:
                     self.state = State.DOWNLOADING
                     date, enchants = await download(cache_dir, self.type, constants.user_agent,
@@ -369,7 +359,7 @@ def enchant_summary(enchants: List[Enchant]):
     for enchant in enchants:
         items[enchant.display_name] += 1
         if not enchant.unique:
-            influences[enchant.item_base][', '.join(enchant.influences) or 'None'] += 1
+            influences[enchant.item_base][', '.join(enchant.influences) or 'Uninfluenced'] += 1
             ilvls[enchant.item_base].append(enchant.ilvl)
             rare_bases.append(enchant.item_base)
 

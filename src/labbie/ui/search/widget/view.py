@@ -151,6 +151,9 @@ class SearchWidget(base.BaseWidget):
         if not selected:
             self.combo_mod.setCurrentIndex(0)
 
+        # TODO: remove
+        self.combo_mod.setCurrentText('Tornado Shot fires an additional secondary Projectile')
+
     def set_mod_text(self, index, text):
         self.combo_mod.setItemText(index, text)
 
@@ -168,7 +171,7 @@ class SearchWidget(base.BaseWidget):
         if not selected:
             self.combo_base.setCurrentIndex(0)
 
-    def add_result(self, title, widget: QtWidgets.QWidget):
+    def add_result_tab(self, title, widget: QtWidgets.QWidget):
         self.tabs.addTab(widget, title)
 
     def clear_results(self):

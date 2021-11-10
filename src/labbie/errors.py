@@ -31,3 +31,10 @@ class NoSuchBase(Exception):
         if error is None:
             error = 'No matching base.'
         super().__init__(error)
+
+
+class UnableToLoadEnchantStatIds(Exception):
+    def __init__(self, error=None):
+        if error is None:
+            error = 'Unable to load enchant stat ids.'
+        super().__init__(error)

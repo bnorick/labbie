@@ -11,6 +11,20 @@ class Result:
     league_result: Optional[List[enchants.Enchant]]
     daily_result: Optional[List[enchants.Enchant]]
 
+    def _summary(self, type_: str, base: bool):
+        results = getattr(self, f'{type_}_result')
+        if results is None:
+            return None
+        if base:
+            return f'{type_.upper()} ({len(results)})\n{enchants.base_summary(results)}'
+        return f'{type_.upper()} ({len(results)})\n{enchants.enchant_summary(results)}'
+
+    def league_summary(self, base):
+        return self._summary('league', base)
+
+    def daily_summary(self, base):
+        return self._summary('daily', base)
+
     def __repr__(self):
         if self.league_result:
             league_result_repr = [self.league_result[0]]

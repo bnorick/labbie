@@ -72,26 +72,11 @@ class SearchPresenter:
         if isinstance(results, search_result.Result):
             results = [results]
 
-        summarizer = enchants.enchant_summary if not base else enchants.base_summary
-
         for result in results:
             result_presenter = self._result_builder.build()
-
-            league_result = []
-            if result.league_result is not None:
-                league_result.append(f'LEAGUE ({len(result.league_result)})')
-                league_result.append(summarizer(result.league_result))
-            league_result = '\n'.join(league_result) or None
-
-            daily_result = []
-            if result.daily_result is not None:
-                daily_result.append(f'DAILY ({len(result.daily_result)})')
-                daily_result.append(summarizer(result.daily_result))
-            daily_result = '\n'.join(daily_result) or None
-
-            result_presenter.populate_view(result.search, league_result, daily_result)
-            title = result.title[:30] + ('...' if len(result.title) > 30 else '')
-            self._view.add_result(title, result_presenter.widget)
+            result_presenter.populate_view(result, base)
+            tab_title = result.title[:30] + ('...' if len(result.title) > 30 else '')
+            self._view.add_result_tab(tab_title, result_presenter.widget)
 
     def on_enchants_changed(self, val):
         app_state = self._app_state

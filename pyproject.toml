@@ -17,6 +17,7 @@ keyboard = "^0.13.5"
 dacite = "^1.6.0"
 toml = "^0.10.2"
 orjson = "^3.6.4"
+pyperclip = "^1.8.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
