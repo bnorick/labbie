@@ -101,8 +101,6 @@ async def start(log_filter):
         asyncio.create_task(app_state.league_enchants.download_or_load(constants))
     if config.daily:
         asyncio.create_task(app_state.daily_enchants.download_or_load(constants))
-    
-    asyncio.create_task(app_state.mods.download_or_load(constants))
 
     app_presenter = injector.get(app.AppPresenter)
     app_presenter.launch()

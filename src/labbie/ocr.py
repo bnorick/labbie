@@ -15,6 +15,7 @@ _Bounds = bounds.Bounds
 
 pytesseract.pytesseract.tesseract_cmd = str(utils.bin_dir() / 'tesseract' / 'tesseract.exe')
 
+
 def read_enchants(bounds: _Bounds, save_path: Optional[pathlib.Path], dilate: Optional[bool] = False):
     if save_path and not save_path.exists():
         save_path.mkdir(exist_ok=True, parents=True)
@@ -22,8 +23,8 @@ def read_enchants(bounds: _Bounds, save_path: Optional[pathlib.Path], dilate: Op
     if save_path:
         image.save(save_path / 'full.png')
     enchants = parse_image(image, save_path, dilate)
-    
     return enchants
+
 
 def parse_image(image, save_path, dilate):
     grayscale = cv.cvtColor(np.array(image), cv.COLOR_RGB2GRAY)

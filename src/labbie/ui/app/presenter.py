@@ -6,11 +6,11 @@ import injector
 
 from labbie import config
 from labbie import constants
-from labbie import enchants
 from labbie import errors
 from labbie import ocr
 from labbie import result
 from labbie import state
+from labbie import mods
 from labbie.ui import hotkey
 
 logger = loguru.logger
@@ -23,11 +23,12 @@ keys = Any  # labbie.ui.keys imports cause circular dependency
 @injector.singleton
 class AppPresenter:
     @injector.inject
-    def __init__(self, constants: _Constants, config: _Config, injector: injector.Injector, app_state: state.AppState):
+    def __init__(self, constants: _Constants, config: _Config, injector: injector.Injector, app_state: state.AppState, mods: mods.Mods):
         self._constants = constants
         self._config = config
         self._injector = injector
         self._app_state = app_state
+        self.mods = mods
 
         self.presenters = {}
 
@@ -53,7 +54,7 @@ class AppPresenter:
     def _ocr_hotkey_pressed(self):
         self.screen_capture(exact=True)
 
-    def screen_capture(self, exact):
+    def screen_capture(self):
         if not self._app_state.league_enchants.enabled and not self._app_state.daily_enchants.enabled:
             self.show(keys.ErrorWindowKey('No enchant scrapes are enabled, please edit the settings.'))
             return
@@ -63,14 +64,12 @@ class AppPresenter:
             save_path = self._constants.screenshots_dir / datetime.datetime.now().strftime('%Y-%m-%d_%H%M%S')
             save_path.mkdir(exist_ok=True)
         partial_enchant_list = ocr.read_enchants(self._config.ocr.bounds, save_path)
-        curr_enchants = self._app_state.mods.get_mod_list_from_partial(partial_enchant_list)
-
+        curr_enchants = self.mods.get_mod_list_from_ocr_results(partial_enchant_list)
+        logger.debug(f'{curr_enchants=}')
         results = []
         # TODO: make this work for gloves/boots?
-        for index, enchant in enumerate(curr_enchants[2:], start=1):
-            if not exact:
-                enchant = enchants.inexact_mod(enchant)
-
+        for index, enchant in enumerate(curr_enchants, start=1):
+            logger.debug(f'{index=}: {enchant=}')
             league_matches = None
             if self._app_state.league_enchants.enabled:
                 try:

@@ -1,9 +1,12 @@
 import dataclasses
+from logging import log
+import string
 import functools
 from typing import Dict, Optional, Tuple, Union
 
 import injector
 import loguru
+import datrie
 
 from labbie import resources
 from labbie import trade
@@ -29,7 +32,6 @@ class Mods:
 
         self._raw_mods = resource_manager.mods
 
-        print(self._raw_mods)
         self.helm_mod_info = self._build_helm_mod_info(self._raw_mods['helmet'])  # exact mod -> HelmModInfo
 
     @functools.cached_property
@@ -77,3 +79,41 @@ class Mods:
                 trade_stat_value=trade_stat_value
             )
         return result
+
+    @functools.cached_property
+    def mod_trie(self) -> datrie.Trie:
+        logger.debug('Creating Trie')
+        trie = datrie.Trie(string.printable)
+        for mod in self.helm_mods:
+            trie[mod] = 1
+        logger.debug(f'{len(trie)}, trie length')
+        return trie
+
+    def get_mod_list_from_ocr_results(self, enchant_list):
+        trie = self.mod_trie
+        logger.debug(f'{enchant_list}')
+        full_enchants = []
+        potential_enchants = []
+        for partial_enchant in enchant_list:
+            if partial_enchant == '':
+                continue
+            partial_enchant = partial_enchant.replace('’', "'")
+            # continuation of enchant
+            if potential_enchants:
+                is_partial_enchant = False
+                for enchant in potential_enchants:
+                    if partial_enchant in enchant:
+                        logger.debug(f'partial part of previous {partial_enchant=}')
+                        if enchant not in full_enchants:
+                            full_enchants.append(enchant)
+                        is_partial_enchant = True
+                if is_partial_enchant:
+                    continue
+
+            potential_enchants = trie.keys(partial_enchant)
+            logger.debug(f'found potential enchant: {potential_enchants}')
+            if len(potential_enchants) == 1:
+                full_enchants.append(potential_enchants[0])
+
+        logger.info(f'found {full_enchants=}')
+        return full_enchants
