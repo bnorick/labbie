@@ -1,10 +1,14 @@
 league = true
 daily = true
 
-[ui]
-    hotkeys = { ocr = '' }
-
 [ocr]
-    clear_previous = true
-    bounds = { left=335, top=207, right=923, bottom=462 }  # for 1920x1080 screen resolution (fullscreen windowed)
-    # bounds = { left=450, top=277, right=1225, bottom=616 }  # for 2560x1440
+clear_previous = true
+
+[ui.hotkeys]
+ocr = ""
+
+[ocr.bounds]
+left = 983
+top = 592
+right = 1579
+bottom = 853

@@ -20,7 +20,7 @@ from labbie import mixins
 logger = loguru.logger
 _FILENAME_FORMAT = '{date:%Y-%m-%d}.json.gz'
 _URL_FORMAT = f'https://labbie.blob.core.windows.net/enchants/{{type}}/{_FILENAME_FORMAT}'
-_BLOB_URL_FORMAT = 'https://labbie.blob.core.windows.net/{{file_name}}'
+_BLOB_URL_FORMAT = f'https://labbie.blob.core.windows.net/enchants/{{file_name}}'
 _MOD_FILE_NAME = 'mods.json.gz'
 _REQUIRED_FILES = [_MOD_FILE_NAME]
 _VALUE_PATTERN = re.compile(r'-?\d*\.?\d+')
@@ -487,23 +487,24 @@ class Mods(mixins.ObservableMixin):
         try:
             logger.info('Loading enchant mod data')
             self.state = State.LOADING
-            changed_files = find_changed_files_by_md5(constants)
+            changed_files = await find_changed_files_by_md5(constants)
             if changed_files:
                 self.state = State.DOWNLOADING
                 await self.download_and_load_files(changed_files, cache_dir)
             else:
-                self.load_files()
+                self.load_files(cache_dir)
         except errors.ModDataNotFound:
             self.state = State.DOWNLOADING
-            await self.download_and_load_files(_REQUIRED_FILES, cache_dir)
+            await self.download_and_load_files(_REQUIRED_FILES, cache_dir, constants)
         self.state.LOADED
 
     async def download_and_load_files(self, file_names, cache_dir: pathlib.Path, constants: _Constants):
         file_md5s = {}
         for file_name in file_names:
-            file_md5 = await download_and_save_blob_data(cache_dir / file_name, constants.user_agent)
+            logger.debug(f'Downloading file: {file_name=}')
+            file_md5 = await download_and_save_blob_data(cache_dir / file_name, _BLOB_URL_FORMAT.format(file_name=file_name), constants.user_agent)
             file_md5s[file_name] = file_md5
-        update_file_md5s(file_md5s)
+        update_file_md5s(cache_dir, file_md5s)
         self.load_files(cache_dir)
 
     def load_files(self, cache_dir):
@@ -521,16 +522,19 @@ async def find_changed_files_by_md5(constants: _Constants):
 
 
 def update_file_md5s(path: pathlib.Path, file_md5s):
-    current_md5s = load_md5s(path)
+    try:
+        current_md5s = load_md5s(path)
+    except errors.ModDataNotFound:
+        current_md5s = {}
     current_md5s.update(file_md5s)
-    save_json_zipped_file(current_md5s)
+    save_json_zipped_file(path / 'file_md5s.json', current_md5s)
 
 
 def load_json_zipped_file(path: pathlib.Path):
     if path.exists():
         try:
-            with path.open(encoding='utf-8') as f:
-                content = f.read()
+            with gzip.open(path) as f:
+                content = f.read().decode('utf8')
                 json_content = orjson.loads(content)
             return json_content
         except orjson.JSONDecodeError:
