@@ -90,7 +90,7 @@ class ResultWidget(base.BaseWidget):
         self.lbl_title = QtWidgets.QLabel(self)
 
         self.btn_price_check = QtWidgets.QPushButton('Price Check', self)
-        self.btn_copy = QtWidgets.QPushButton('Copy', self)
+        self.btn_copy = QtWidgets.QPushButton('Copy Results', self)
         self.lbl_selected_stats = QtWidgets.QLabel(self)
 
         self.stack_results = QtWidgets.QStackedWidget(self)

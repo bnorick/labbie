@@ -20,6 +20,16 @@ _HTML_PAYLOAD_FORMAT = '''<html>
 <h1>Trade Rate Limit Protection</h1>
 <h3>You will be redirected to your search for {search} in <span id="seconds"></span> seconds.</h3>
 At the <strong>risk of being rate limited</strong>, you can click <a href="{url}">here</a> to proceed now.
+
+<style>
+body {{
+    background-color: rgb(53, 53, 53);
+    color: rgb(180, 180, 180);
+}}
+a {{
+    color: rgb(56, 252, 196);
+}}
+</style>
 <script>
     var delay = {delay};
 
