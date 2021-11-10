@@ -8,6 +8,7 @@ from labbie import enchants
 class Result:
     title: str
     search: str
+    base: bool  # is this a result from a base search
     league_result: Optional[List[enchants.Enchant]]
     daily_result: Optional[List[enchants.Enchant]]
 

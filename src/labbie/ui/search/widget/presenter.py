@@ -56,7 +56,7 @@ class SearchPresenter:
         pass
 
     def populate_view(self, results: Union[None, search_result.Result, List[search_result.Result]],
-                      clear=False, base=False):
+                      clear=False):
         logger.debug(f'{results=}')
         if not results:
             return
@@ -69,7 +69,7 @@ class SearchPresenter:
 
         for result in results:
             result_presenter = self._result_builder.build()
-            result_presenter.populate_view(result, base)
+            result_presenter.populate_view(result)
             tab_title = result.title[:30] + ('...' if len(result.title) > 30 else '')
             self._view.add_result_tab(tab_title, result_presenter.widget)
 
@@ -97,7 +97,13 @@ class SearchPresenter:
             self._app_presenter.show(keys.ErrorWindowKey(e))
             return
 
-        result = search_result.Result(title=mod, search=mod, league_result=league_matches, daily_result=daily_matches)
+        result = search_result.Result(
+            title=mod,
+            search=mod,
+            base=False,
+            league_result=league_matches,
+            daily_result=daily_matches
+        )
         self.populate_view(result)
 
     def on_search_base(self, checked):
@@ -134,18 +140,36 @@ class SearchPresenter:
         ilvl = f'i{ilvl}+ ' if ilvl != 0 else ''
         influence = f'{", ".join(influences)} ' if influences else ''
         search = f'{ilvl}{influence}{base_name}'
-        result = search_result.Result(title=search, search=search, league_result=league_matches, daily_result=daily_matches)
-        self.populate_view(result, base=True)
+        result = search_result.Result(
+            title=search,
+            search=search,
+            base=True,
+            league_result=league_matches,
+            daily_result=daily_matches
+        )
+        self.populate_view(result)
 
     def on_all(self, checked):
         league_enchants = self._app_state.league_enchants.enchants
         daily_enchants = self._app_state.daily_enchants.enchants
 
-        bases = search_result.Result(title='Bases', search='All Bases', league_result=league_enchants, daily_result=daily_enchants)
-        self.populate_view(bases)
+        bases_result = search_result.Result(
+            title='Bases',
+            search='All Bases',
+            base=False,
+            league_result=league_enchants,
+            daily_result=daily_enchants
+        )
+        self.populate_view(bases_result)
 
-        enchants = search_result.Result(title='Enchants', search='All Enchants', league_result=league_enchants, daily_result=daily_enchants)
-        self.populate_view(enchants, base=True)
+        enchants_result = search_result.Result(
+            title='Enchants',
+            search='All Enchants',
+            base=True,
+            league_result=league_enchants,
+            daily_result=daily_enchants
+        )
+        self.populate_view(enchants_result)
 
     def on_screen_capture(self, checked):
         self._app_presenter.screen_capture()
