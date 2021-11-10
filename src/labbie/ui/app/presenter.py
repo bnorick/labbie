@@ -69,7 +69,7 @@ class AppPresenter:
         # TODO: make this work for gloves/boots?
         for index, enchant in enumerate(curr_enchants[2:], start=1):
             if not exact:
-                enchant = enchants.unexact_mod(enchant)
+                enchant = enchants.inexact_mod(enchant)
 
             league_matches = None
             if self._app_state.league_enchants.enabled:

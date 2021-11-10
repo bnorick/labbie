@@ -38,8 +38,6 @@ class SearchWidget(base.BaseWidget):
 
         lbl_mod = QtWidgets.QLabel('Enchant', self)
         self.combo_mod = fuzzy_combo.FuzzyComboBox(self)
-        lbl_exact_mod = QtWidgets.QLabel('Exact', self)
-        self.chk_exact_mod = QtWidgets.QCheckBox(self)
         self.btn_search_mod = QtWidgets.QPushButton('Search', self)
 
         lbl_base = QtWidgets.QLabel('Base', self)
@@ -52,8 +50,6 @@ class SearchWidget(base.BaseWidget):
 
         self.btn_all = QtWidgets.QPushButton('All', self)
         self.btn_screen_capture = QtWidgets.QPushButton('Screen Capture', self)
-        lbl_exact_screen_capture = QtWidgets.QLabel('Exact', self)
-        self.chk_exact_screen_capture = QtWidgets.QCheckBox(self)
 
         self.tabs = QtWidgets.QTabWidget(self)
         self.tab_bar = TabBar()
@@ -68,8 +64,6 @@ class SearchWidget(base.BaseWidget):
         layout_mod = QtWidgets.QHBoxLayout()
         layout_mod.addWidget(lbl_mod)
         layout_mod.addWidget(self.combo_mod, 1)
-        layout_mod.addWidget(lbl_exact_mod)
-        layout_mod.addWidget(self.chk_exact_mod)
 
         layout_mod_search = QtWidgets.QHBoxLayout()
         layout_mod_search.addWidget(self.btn_search_mod, 1)
@@ -96,8 +90,6 @@ class SearchWidget(base.BaseWidget):
         layout_screen_capture = QtWidgets.QHBoxLayout()
         layout_screen_capture.addWidget(self.btn_all)
         layout_screen_capture.addWidget(self.btn_screen_capture, 1)
-        layout_screen_capture.addWidget(lbl_exact_screen_capture)
-        layout_screen_capture.addWidget(self.chk_exact_screen_capture)
 
         layout = QtWidgets.QVBoxLayout()
         layout.addLayout(layout_mod_section)
@@ -115,8 +107,8 @@ class SearchWidget(base.BaseWidget):
     def on_tab_middle_click(self, index):
         self.tabs.removeTab(index)
 
-    def set_exact_mod_handler(self, handler):
-        self._connect_signal_to_slot(self.chk_exact_mod.toggled, handler)
+    def set_uber_mod_handler(self, handler):
+        self._connect_signal_to_slot(self.chk_uber_mod.toggled, handler)
 
     def set_search_mod_handler(self, handler):
         self._connect_signal_to_slot(self.btn_search_mod.clicked, handler)
@@ -151,6 +143,9 @@ class SearchWidget(base.BaseWidget):
         if not selected:
             self.combo_mod.setCurrentIndex(0)
 
+        # TODO: remove
+        self.combo_mod.setCurrentText('Tornado Shot fires an additional secondary Projectile')
+
     def set_mod_text(self, index, text):
         self.combo_mod.setItemText(index, text)
 
@@ -168,7 +163,7 @@ class SearchWidget(base.BaseWidget):
         if not selected:
             self.combo_base.setCurrentIndex(0)
 
-    def add_result(self, title, widget: QtWidgets.QWidget):
+    def add_result_tab(self, title, widget: QtWidgets.QWidget):
         self.tabs.addTab(widget, title)
 
     def clear_results(self):
@@ -179,10 +174,6 @@ class SearchWidget(base.BaseWidget):
     @utils.combo_box_property
     def mod(self):
         return self.combo_mod
-
-    @utils.checkbox_property
-    def exact_mod(self):
-        return self.chk_exact_mod
 
     @utils.combo_box_property
     def base(self):
@@ -195,7 +186,3 @@ class SearchWidget(base.BaseWidget):
     @utils.checkable_combo_box_property
     def influences(self):
         return self.chkcombo_influences
-
-    @utils.checkbox_property
-    def exact_screen_capture(self):
-        return self.chk_exact_screen_capture

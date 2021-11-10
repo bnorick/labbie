@@ -147,21 +147,21 @@ class SettingsPresenter:
     #         except errors.EnchantsNotLoaded:
     #             pass
 
-    #     self._mod_to_unexact_mod = {}
-    #     self._unexact_mod_to_mod = {}
+    #     self._mod_to_inexact_mod = {}
+    #     self._inexact_mod_to_mod = {}
     #     highest_mod = {}
     #     for mod in mods:
-    #         unexact = enchants.unexact_mod(mod)
-    #         self._mod_to_unexact_mod[mod] = unexact
+    #         inexact = enchants.inexact_mod(mod)
+    #         self._mod_to_inexact_mod[mod] = inexact
 
-    #         if mod > highest_mod.get(unexact, ''):
-    #             highest_mod[unexact] = mod
-    #             self._unexact_mod_to_mod[unexact] = mod
+    #         if mod > highest_mod.get(inexact, ''):
+    #             highest_mod[inexact] = mod
+    #             self._inexact_mod_to_mod[inexact] = mod
 
-    #     sortable_mods = [(self._mod_to_unexact_mod[mod], mod) for mod in mods]
-    #     unexact_mods, mods = zip(*sorted(sortable_mods, key=lambda x: (x[0].lower(), x[1].lower())))
+    #     sortable_mods = [(self._mod_to_inexact_mod[mod], mod) for mod in mods]
+    #     inexact_mods, mods = zip(*sorted(sortable_mods, key=lambda x: (x[0].lower(), x[1].lower())))
     #     self._mods = mods
-    #     self._unexact_mods = list(dict.fromkeys(unexact_mods))  # deduplicates the list
+    #     self._inexact_mods = list(dict.fromkeys(inexact_mods))  # deduplicates the list
 
     #     bases = set()
     #     if app_state.league_enchants:
@@ -179,12 +179,12 @@ class SettingsPresenter:
     #     if self._view.exact_mod:
     #         self._view.set_mods(self._mods, None)
     #     else:
-    #         self._view.set_mods(self._unexact_mods, None)
+    #         self._view.set_mods(self._inexact_mods, None)
     #     self._view.set_bases(self._bases)
 
     # def on_exact_mod(self, checked):
-    #     mods = self._mods if checked else self._unexact_mods
-    #     equivalent_mods = self._unexact_mod_to_mod if checked else self._mod_to_unexact_mod
+    #     mods = self._mods if checked else self._inexact_mods
+    #     equivalent_mods = self._inexact_mod_to_mod if checked else self._mod_to_inexact_mod
     #     self._view.set_mods(mods, equivalent_mods)
 
     # def on_search_mod(self, checked):

@@ -119,8 +119,8 @@ class Constants(BaseConstants):
         return self.data_dir / 'screenshots'
 
     @functools.cached_property
-    def mod_dir(self):
-        return self.data_dir / 'mods'
+    def resources_dir(self):
+        return self.data_dir / 'resources'
 
     @classmethod
     def from_toml(cls, path: pathlib.Path, overrides=None):

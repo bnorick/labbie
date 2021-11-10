@@ -19,6 +19,7 @@ class State(enum.Enum):
 @dataclasses.dataclass
 class AppState(mixins.ObservableMixin):
     state: State = State.STARTING
+    resources_ready: bool = False
     league_enchants: enchants.Enchants = enchants.Enchants('league')
     daily_enchants: enchants.Enchants = enchants.Enchants('daily')
     mods: enchants.Mods = enchants.Mods()

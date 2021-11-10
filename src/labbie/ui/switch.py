@@ -147,3 +147,27 @@ class Switch(QtWidgets.QAbstractButton):
     def enterEvent(self, event):  # pylint: disable=invalid-name
         self.setCursor(Qt.PointingHandCursor)
         super().enterEvent(event)
+
+
+class Toggle(Switch):
+
+    def __init__(self, parent=None, track_radius=10, thumb_radius=8):
+        super().__init__(parent=parent, track_radius=track_radius, thumb_radius=thumb_radius)
+        palette = self.palette()
+        self._track_color = {
+            True: palette.dark(),
+            False: palette.dark(),
+        }
+        self._thumb_color = {
+            True: palette.light(),
+            False: palette.light(),
+        }
+        self._text_color = {
+            True: palette.highlightedText().color(),
+            False: palette.dark().color(),
+        }
+        self._thumb_text = {
+            True: '',
+            False: '',
+        }
+        self._track_opacity = 0.5

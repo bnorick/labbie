@@ -105,16 +105,6 @@ class Enchants(mixins.ObservableMixin):
         self.date = date
         self.notify(enchants=enchants, date=date, _log=False)
 
-    # def load(self, path):
-    #     # TODO: make this async
-    #     try:
-    #         date, enchants_ = load_enchants(path)
-    #         self.date = date
-    #         self.set_enchants(date, enchants_)
-    #     except errors.EnchantDataNotFound:
-    #         self.state = State.MISSING
-    #         raise
-
     def refresh_needed(self):
         return self.date != datetime.date.today()
 
@@ -361,7 +351,7 @@ def find_matching_enchants(enchants: List[Enchant], target: str):
     matches = []
     for enchant in enchants:
         for mod in enchant.mods:
-            if target in mod.lower() or target in unexact_mod(mod).lower():
+            if target in mod.lower() or target in inexact_mod(mod).lower():
                 matches.append(enchant)
     return matches
 
@@ -374,7 +364,7 @@ def find_matching_helms(enchants: List[Enchant], target: Helm):
     return matches
 
 
-def unexact_mod(mod):
+def inexact_mod(mod):
     return _VALUE_PATTERN.sub('#', mod)
 
 
@@ -387,7 +377,7 @@ def enchant_summary(enchants: List[Enchant]):
     for enchant in enchants:
         items[enchant.display_name] += 1
         if not enchant.unique:
-            influences[enchant.item_base][', '.join(enchant.influences) or 'None'] += 1
+            influences[enchant.item_base][', '.join(enchant.influences) or 'Uninfluenced'] += 1
             ilvls[enchant.item_base].append(enchant.ilvl)
             rare_bases.append(enchant.item_base)
 
@@ -432,7 +422,7 @@ def base_summary(enchants: List[Enchant]):
 
     for enchant in enchants:
         for mod in enchant.mods:
-            mods[unexact_mod(mod)] += 1
+            mods[inexact_mod(mod)] += 1
 
     summary = [f'  {count:>3d} {val}' for val, count in mods.most_common()]
 
