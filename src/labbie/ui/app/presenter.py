@@ -87,7 +87,7 @@ class AppPresenter:
                     return
 
             if league_matches or daily_matches:
-                result = _Result(title=enchant, search=f'{enchant} (Helm {len(results)})', league_result=league_matches, daily_result=daily_matches, base=False)
+                result = _Result(title=enchant, search=enchant, league_result=league_matches, daily_result=daily_matches, base=False)
                 results.append(result)
 
         if results:
