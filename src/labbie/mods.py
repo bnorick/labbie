@@ -101,19 +101,28 @@ class Mods:
             # continuation of enchant
             if potential_enchants:
                 is_partial_enchant = False
+                reduced_potential_enchants = []
                 for enchant in potential_enchants:
                     if partial_enchant in enchant:
+                        reduced_potential_enchants.append(enchant)
                         logger.debug(f'partial part of previous {partial_enchant=}')
                         if enchant not in full_enchants:
                             full_enchants.append(enchant)
                         is_partial_enchant = True
+                potential_enchants = reduced_potential_enchants
                 if is_partial_enchant:
                     continue
-
+                # multiple potential enchants still, but the extras will be filtered out
+                # when doing comparison against the trade searches.
+                if len(potential_enchants) > 1:
+                    full_enchants.extend(potential_enchants)
             potential_enchants = trie.keys(partial_enchant)
             logger.debug(f'found potential enchant: {potential_enchants}')
-            if len(potential_enchants) == 1:
-                full_enchants.append(potential_enchants[0])
 
+            if len(potential_enchants) == 1:
+                full_enchants.extend(potential_enchants)
+
+        if len(potential_enchants) > 1:
+            full_enchants.extend(potential_enchants)
         logger.info(f'found {full_enchants=}')
         return full_enchants
