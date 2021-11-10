@@ -4,8 +4,9 @@ from typing import List, Union
 import injector
 import loguru
 
+from labbie import bases
 from labbie import errors
-from labbie import resources
+from labbie import mods
 from labbie import state
 from labbie import result as search_result
 from labbie.ui.app import presenter as app
@@ -22,13 +23,15 @@ class SearchPresenter:
         self,
         app_state: state.AppState,
         app_presenter: app.AppPresenter,
-        resource_manager: resources.ResourceManager,
+        bases_: bases.Bases,
+        mods_: mods.Mods,
         view: view.SearchWidget,
         result_builder: injector.AssistedBuilder[result.ResultWidgetPresenter]
     ):
         self._app_state = app_state
         self._app_presenter = app_presenter
-        self._resource_manager = resource_manager
+        self._bases = bases_
+        self._mods = mods_
         self._view = view
         self._result_builder = result_builder
 
@@ -39,14 +42,11 @@ class SearchPresenter:
         self._view.set_all_handler(self.on_all)
         self._view.set_screen_capture_handler(self.on_screen_capture)
 
-        self._mods = resource_manager.helm_exact_mods
-        self._bases = resource_manager.helm_bases
-
         # TODO(bnorick): attach to enchants so that we can update the dropdowns when enchants change
         influences = ['Shaper', 'Elder', 'Crusader', 'Redeemer', 'Hunter', 'Warlord']
         self._view.set_influence_options(influences, influences)
-        self._view.set_mods([''], None)
-        self._view.set_bases([''])
+        self._view.set_mods(self._mods.helm_mods, None)
+        self._view.set_bases(self._bases.helm_display_texts)
 
     @property
     def widget(self):
