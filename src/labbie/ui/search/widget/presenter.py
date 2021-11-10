@@ -62,7 +62,7 @@ class SearchPresenter:
         pass
 
     def populate_view(self, results: Union[None, search_result.Result, List[search_result.Result]],
-                      clear=False):
+                      clear=False, switch=False):
         logger.debug(f'{results=}')
         if not results:
             return
@@ -77,7 +77,7 @@ class SearchPresenter:
             result_presenter = self._result_builder.build()
             result_presenter.populate_view(result)
             tab_title = result.title[:30] + ('...' if len(result.title) > 30 else '')
-            self._view.add_result_tab(tab_title, result_presenter.widget)
+            self._view.add_result_tab(tab_title, result_presenter.widget, switch=switch)
 
     def on_search_mod(self, checked):
         try:
@@ -110,7 +110,7 @@ class SearchPresenter:
             league_result=league_matches,
             daily_result=daily_matches
         )
-        self.populate_view(result)
+        self.populate_view(result, switch=True)
 
     def on_search_base(self, checked):
         try:
@@ -153,7 +153,7 @@ class SearchPresenter:
             league_result=league_matches,
             daily_result=daily_matches
         )
-        self.populate_view(result)
+        self.populate_view(result, switch=True)
 
     def on_all(self, checked):
         league_enchants = self._app_state.league_enchants.enchants

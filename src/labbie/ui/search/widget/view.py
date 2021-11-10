@@ -154,8 +154,10 @@ class SearchWidget(base.BaseWidget):
         if not selected:
             self.combo_base.setCurrentIndex(0)
 
-    def add_result_tab(self, title, widget: QtWidgets.QWidget):
-        self.tabs.addTab(widget, title)
+    def add_result_tab(self, title, widget: QtWidgets.QWidget, switch=False):
+        index = self.tabs.addTab(widget, title)
+        if switch:
+            self.tabs.setCurrentIndex(index)
 
     def clear_results(self):
         for _ in range(self.tabs.count()):
