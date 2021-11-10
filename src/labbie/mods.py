@@ -117,12 +117,11 @@ class Mods:
         trie = datrie.Trie(string.printable)
         for mod in self.helm_mods:
             trie[mod] = 1
-        logger.debug(f'{len(trie)}, trie length')
         return trie
 
     def get_mod_list_from_ocr_results(self, enchant_list):
         trie = self.mod_trie
-        logger.debug(f'{enchant_list}')
+        logger.debug(f'Data from OCR{enchant_list}')
         full_enchants = []
         potential_enchants = []
         for partial_enchant in enchant_list:
@@ -136,7 +135,6 @@ class Mods:
                 for enchant in potential_enchants:
                     if partial_enchant in enchant:
                         reduced_potential_enchants.append(enchant)
-                        logger.debug(f'partial part of previous {partial_enchant=}')
                         if enchant not in full_enchants:
                             full_enchants.append(enchant)
                         is_partial_enchant = True
@@ -148,7 +146,6 @@ class Mods:
                 if len(potential_enchants) > 1:
                     full_enchants.extend(potential_enchants)
             potential_enchants = trie.keys(partial_enchant)
-            logger.debug(f'found potential enchant: {potential_enchants}')
 
             if len(potential_enchants) == 1:
                 full_enchants.extend(potential_enchants)
@@ -157,6 +154,7 @@ class Mods:
             full_enchants.extend(potential_enchants)
         logger.info(f'found {full_enchants=}')
         return full_enchants
+
     def _fix_krangled_helm_mods(self, helm_mod_info: Dict[str, HelmModInfo]):
         helm_mod_info['Fireball Always Ignites'].display = False
         helm_mod_info['Fireball has +30% chance to Ignite'].display = True
