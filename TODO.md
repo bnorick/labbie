@@ -9,6 +9,9 @@
 - Remember window locations
 - Add ratelimited error handling to the buy urls
 - Color for selected league / daily text with toggle
+- Splash screen (waits for resources / enchants to be ready)
+- Move enchants downloading to resource manager (?)
+- 4k
 
 # Major features
 ## Price checking

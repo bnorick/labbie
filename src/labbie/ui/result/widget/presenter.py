@@ -10,9 +10,11 @@ import injector
 import loguru
 
 from labbie import enchants
+from labbie import mods
 from labbie import result
 from labbie.ui.result.widget import view
 
+_Mods = mods.Mods
 logger = loguru.logger
 _HTML_PAYLOAD_FORMAT = '''<html>
 <body>
@@ -55,23 +57,33 @@ class ResultData:
         base = self.base
         return f'{ilvl}{influence}{base}'
 
-    def build_search_url(self):
-        search = {
-            'query': {
-                'status': {
-                    'option': 'online'
-                },
+    def build_search_url(self, enchant_stat_id, enchant_stat_value):
+        stats = [
+            {
+                'type': 'and',
+                'filters': [{'id': enchant_stat_id, 'min': enchant_stat_value, 'max': enchant_stat_value}]
+            }
+        ]
+
+        query = {
+            'status': {
+                'option': 'online'
             },
-            'term': self.base,
+            'stats': stats,
+            'term': self.base
+        }
+
+        search = {
+            'query': query,
             'sort': {
                 'price': 'asc'
             }
         }
 
-        filters = {}
+        query_filters = {}
 
         if not self.unique:
-            filters['type_filters'] = {
+            query_filters['type_filters'] = {
                 'filters': {
                     'rarity': {
                         'option': 'nonunique'
@@ -80,7 +92,7 @@ class ResultData:
             }
 
         if self.ilvl:
-            filters['misc_filters'] = {
+            query_filters['misc_filters'] = {
                 'filters': {
                     'ilvl': {
                         'min': self.ilvl
@@ -90,32 +102,29 @@ class ResultData:
 
         if self.influence and self.influence != 'Uninfluenced':
             influences = [inf.lower() for inf in self.influence.split(', ')]
-            filters = [{'id': f'pseudo.pseudo_has_{influence}_influence'} for influence in influences]
-            search['stats'] = [
-                {
-                    'type': 'and',
-                    'filters': filters
-                }
-            ]
+            stats[0]['filters'].extend({'id': f'pseudo.pseudo_has_{influence}_influence'} for influence in influences)
 
-        if filters:
-            search['filters'] = filters
+        if query_filters:
+            query['filters'] = query_filters
 
-        query_string = parse.urlencode({'q': json.dumps(search)})
+        query_string = parse.urlencode({'q': json.dumps(search)}, quote_via=parse.quote)
         return f'https://www.pathofexile.com/trade/search/Scourge?{query_string}'
 
-    def price_check_url(self, delay=0):
-        payload = base64.b64encode(
-            _HTML_PAYLOAD_FORMAT.format(delay=delay, url=self.build_search_url(), search=self).encode('utf8'))
-
+    def price_check_url(self, enchant_stat, enchant_value, delay=0):
+        search_url = self.build_search_url(enchant_stat, enchant_value)
+        logger.debug(f'{search_url=}')
+        html = _HTML_PAYLOAD_FORMAT.format(delay=delay, url=search_url, search=self)
+        payload = base64.b64encode(html.encode('utf8'))
         return 'https://labbie-redirect.azurewebsites.net/' + payload.decode('utf8')
 
 
 class ResultWidgetPresenter:
 
     @injector.inject
-    def __init__(self, view: view.ResultWidget):
+    def __init__(self, mods: _Mods, view: view.ResultWidget):
         self._view = view
+        self._helm_mod_to_trade_text = mods.helm_mod_to_trade_text
+
         # NOTE: connecting the clicked signal to self.on_price_check directly as the slot wasn't working
         # for some reason, no clue.
         self._view.set_price_check_handler(lambda: self.on_price_check())

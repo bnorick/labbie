@@ -33,8 +33,9 @@ class NoSuchBase(Exception):
         super().__init__(error)
 
 
-class UnableToLoadEnchantStatIds(Exception):
-    def __init__(self, error=None):
-        if error is None:
-            error = 'Unable to load enchant stat ids.'
+class FailedToDownloadResource(Exception):
+    def __init__(self, remote_resource: str):
+        error = 'Failed to download resource {}.'
         super().__init__(error)
+
+

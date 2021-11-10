@@ -1,9 +1,12 @@
 import atexit
+import contextlib
 import dataclasses
 import mmap
 import os
 import pathlib
 import sys
+from typing import Optional
+import aiohttp
 
 import loguru
 
@@ -96,6 +99,15 @@ def make_slotted_dataclass(cls):
     if qualname is not None:
         cls.__qualname__ = qualname
     return cls
+
+
+@contextlib.asynccontextmanager
+async def client_session(session: Optional[aiohttp.ClientSession] = None) -> aiohttp.ClientSession:
+    if session:
+        yield session
+    else:
+        async with aiohttp.ClientSession() as session:
+            yield session
 
 
 class LogFilter:

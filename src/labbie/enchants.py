@@ -333,7 +333,7 @@ def find_matching_enchants(enchants: List[Enchant], target: str):
     matches = []
     for enchant in enchants:
         for mod in enchant.mods:
-            if target in mod.lower() or target in unexact_mod(mod).lower():
+            if target in mod.lower() or target in inexact_mod(mod).lower():
                 matches.append(enchant)
     return matches
 
@@ -346,7 +346,7 @@ def find_matching_helms(enchants: List[Enchant], target: Helm):
     return matches
 
 
-def unexact_mod(mod):
+def inexact_mod(mod):
     return _VALUE_PATTERN.sub('#', mod)
 
 
@@ -404,7 +404,7 @@ def base_summary(enchants: List[Enchant]):
 
     for enchant in enchants:
         for mod in enchant.mods:
-            mods[unexact_mod(mod)] += 1
+            mods[inexact_mod(mod)] += 1
 
     summary = [f'  {count:>3d} {val}' for val, count in mods.most_common()]
 
