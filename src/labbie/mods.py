@@ -158,3 +158,5 @@ class Mods:
     def _fix_krangled_helm_mods(self, helm_mod_info: Dict[str, HelmModInfo]):
         helm_mod_info['Fireball Always Ignites'].display = False
         helm_mod_info['Fireball has +30% chance to Ignite'].display = True
+        helm_mod_info['Burning Arrow Always Ignites'].display = False
+        helm_mod_info['Burning Arrow has +30% chance to Ignite'].display = True

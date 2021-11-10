@@ -137,11 +137,8 @@ class SearchWidget(base.BaseWidget):
         if not selected:
             self.combo_mod.setCurrentIndex(0)
 
-        # TODO: remove
-        self.combo_mod.setCurrentText('Tornado Shot fires an additional secondary Projectile')
-
-    def set_mod_text(self, index, text):
-        self.combo_mod.setItemText(index, text)
+    def set_selected_mod(self, text):
+        self.combo_mod.setCurrentText(text)
 
     def set_bases(self, bases: List[str]):
         prev_selected = self.combo_base.currentText()

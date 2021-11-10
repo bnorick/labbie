@@ -5,6 +5,7 @@ import injector
 import loguru
 
 from labbie import bases
+from labbie import constants
 from labbie import errors
 from labbie import mods
 from labbie import state
@@ -21,6 +22,7 @@ class SearchPresenter:
     @injector.inject
     def __init__(
         self,
+        constants_: constants.Constants,
         app_state: state.AppState,
         app_presenter: app.AppPresenter,
         bases_: bases.Bases,
@@ -28,6 +30,7 @@ class SearchPresenter:
         view: view.SearchWidget,
         result_builder: injector.AssistedBuilder[result.ResultWidgetPresenter]
     ):
+        self._constants = constants_
         self._app_state = app_state
         self._app_presenter = app_presenter
         self._bases = bases_
@@ -47,6 +50,9 @@ class SearchPresenter:
         self._view.set_influence_options(influences, influences)
         self._view.set_mods(self._mods.helm_display_mods, None)
         self._view.set_bases(self._bases.helm_display_texts)
+
+        if constants_.debug:
+            self._view.set_selected_mod('Tornado Shot fires an additional secondary Projectile')
 
     @property
     def widget(self):
