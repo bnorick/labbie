@@ -21,6 +21,7 @@ class AppState(mixins.ObservableMixin):
     state: State = State.STARTING
     league_enchants: enchants.Enchants = enchants.Enchants('league')
     daily_enchants: enchants.Enchants = enchants.Enchants('daily')
+    mods: enchants.Mods = enchants.Mods()
     last_error: Optional[str] = None
 
     def ensure_scrape_enabled(self):

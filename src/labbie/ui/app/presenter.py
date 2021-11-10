@@ -62,8 +62,8 @@ class AppPresenter:
         if self._constants.debug:
             save_path = self._constants.screenshots_dir / datetime.datetime.now().strftime('%Y-%m-%d_%H%M%S')
             save_path.mkdir(exist_ok=True)
-        
-        curr_enchants = ocr.read_enchants(self._config.ocr.bounds, save_path, self._constants.dilate)
+        partial_enchant_list = ocr.read_enchants(self._config.ocr.bounds, save_path)
+        curr_enchants = self._app_state.mods.get_mod_list_from_partial(partial_enchant_list)
 
         results = []
         # TODO: make this work for gloves/boots?

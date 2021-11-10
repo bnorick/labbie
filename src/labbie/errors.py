@@ -4,6 +4,11 @@ class EnchantDataNotFound(Exception):
             error = 'No enchant data found.'
         super().__init__(error)
 
+class ModDataNotFound(Exception):
+    def __init__(self, error=None):
+        if error is None:
+            error = 'No cached mod data found'
+        super().__init__(error)
 
 class EnchantDataInvalid(Exception):
     def __init__(self, error=None):

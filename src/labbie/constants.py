@@ -118,6 +118,10 @@ class Constants(BaseConstants):
     def screenshots_dir(self):
         return self.data_dir / 'screenshots'
 
+    @functools.cached_property
+    def mod_dir(self):
+        return self.data_dir / 'mods'
+
     @classmethod
     def from_toml(cls, path: pathlib.Path, overrides=None):
         with path.open() as f:
