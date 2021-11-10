@@ -3,18 +3,15 @@ import collections
 import dataclasses
 import datetime
 import enum
-import functools
 import gzip
 import io
 import pathlib
 import re
-from typing import List, NamedTuple, Optional, Set, Dict
-from base64 import b64decode
+from typing import List, NamedTuple, Optional, Set
 
 import aiohttp
 import loguru
 import orjson
-from github import Github
 
 from labbie import constants
 from labbie import errors
@@ -23,7 +20,9 @@ from labbie import mixins
 logger = loguru.logger
 _FILENAME_FORMAT = '{date:%Y-%m-%d}.json.gz'
 _URL_FORMAT = f'https://labbie.blob.core.windows.net/enchants/{{type}}/{_FILENAME_FORMAT}'
-_MOD_URL_FORMAT = f'https://labbie.blob.core.windows.net/mods.json.gz'
+_BLOB_URL_FORMAT = 'https://labbie.blob.core.windows.net/{{file_name}}'
+_MOD_FILE_NAME = 'mods.json.gz'
+_REQUIRED_FILES = [_MOD_FILE_NAME]
 _VALUE_PATTERN = re.compile(r'-?\d*\.?\d+')
 _HISTORICAL_DAYS = 15
 _REFRESH_DELAY = 5 * 60  # 5 minutes
@@ -289,6 +288,7 @@ async def last_downloadable_date(user_agent: str, type_: str, past_days):
                 return date
     return None
 
+
 async def download(cache_dir: pathlib.Path, type_: str, user_agent: str, past_days: int):
     logger.info(f'downloading {type_} enchants')
     today = today_utc()
@@ -319,29 +319,19 @@ async def download(cache_dir: pathlib.Path, type_: str, user_agent: str, past_da
         raise errors.EnchantDataNotFound
 
 
-async def last_mod_update_date(user_agent: str):
+async def get_blob_file_md5(file_name: str, user_agent: str):
     async with aiohttp.ClientSession(headers={'User-Agent': user_agent}) as session:
-        async with session.head(_MOD_URL_FORMAT) as resp:
-                if resp.status == 404:
-                    pass
-                return 
-    return None
+        async with session.head(_BLOB_URL_FORMAT.format(file_name=file_name)) as resp:
+            return resp.headers.get('Content-MD5')
 
-async def download_mod_data(cache_dir: pathlib.Path, user_agent: str):
-    path = cache_dir / 'mods.json.gz'
+
+async def download_and_save_blob_data(file_save_path: pathlib.Path, url: str, user_agent: str,):
     async with aiohttp.ClientSession(headers={'User-Agent': user_agent}) as session:
-        async with session.get(_MOD_URL_FORMAT) as resp:
-                if resp.status == 404:
-                    pass
-
-                content = await resp.content.read()
-                with path.open('wb') as f:
-                    f.write(content)
-                with gzip.open(io.BytesIO(content)) as f:
-                    decompressed_content = f.read()
-                mods = orjson.loads(decompressed_content)
-
-                return mods
+        async with session.get(url) as resp:
+            content = await resp.content.read()
+            with file_save_path.open('wb') as f:
+                f.write(content)
+            return resp.headers.get('Content-MD5')
 
 
 def load_enchants(cache_dir: pathlib.Path, date=None):
@@ -386,6 +376,7 @@ def find_matching_helms(enchants: List[Enchant], target: Helm):
 
 def unexact_mod(mod):
     return _VALUE_PATTERN.sub('#', mod)
+
 
 def enchant_summary(enchants: List[Enchant]):
     items = collections.Counter()
@@ -447,6 +438,7 @@ def base_summary(enchants: List[Enchant]):
 
     return '\n'.join(summary)
 
+
 @dataclasses.dataclass
 class Mods(mixins.ObservableMixin):
 
@@ -472,10 +464,10 @@ class Mods(mixins.ObservableMixin):
                         is_partial_enchant = True
                 if is_partial_enchant:
                     continue
-                # odd scenario where there are multiple potential enchants but no follow up lines to determine wich is correct
-                # main scenario this happens is with plurals
+                # odd scenario where there are multiple potential enchants but no follow up lines
+                # to determine wich is correct main scenario this happens is with plurals
                 if len(potential_enchants) > 1:
-                    full_enchants.append(potential_enchants[0])
+                    full_enchants.extend(potential_enchants)
             potential_enchants = []
             for mod in self.mods:
                 if mod.startswith(partial_enchant):
@@ -484,92 +476,79 @@ class Mods(mixins.ObservableMixin):
 
             if len(potential_enchants) == 1:
                 full_enchants.append(potential_enchants[0])
-        # odd scenario where there are multiple potential enchants but no follow up lines to determine wich is correct
-        # main scenario this happens is with plurals
         if len(potential_enchants) > 1:
-            full_enchants.append(potential_enchants[0])
+            full_enchants.extend(potential_enchants)
         logger.info(f'found {full_enchants=}')
         return full_enchants
 
-    async def download_or_load(self, constants):
+    async def download_or_load(self, constants: _Constants):
         cache_dir = constants.mod_dir
         # first try to load from cache if most recent data is cached
         try:
             logger.info('Loading enchant mod data')
             self.state = State.LOADING
-            mods = None
-            if check_file_changed():
-               mods = load_mods(cache_dir)
-            else:
+            changed_files = find_changed_files_by_md5(constants)
+            if changed_files:
                 self.state = State.DOWNLOADING
-                mods = await self.download_mods(cache_dir)
-            
+                await self.download_and_load_files(changed_files, cache_dir)
+            else:
+                self.load_files()
         except errors.ModDataNotFound:
             self.state = State.DOWNLOADING
-            mods = await self.download_mods(cache_dir)
+            await self.download_and_load_files(_REQUIRED_FILES, cache_dir)
         self.state.LOADED
-        self.mods = set(mods)
-        
-    async def download_mods(self, path: pathlib.Path):
-        logger.info('Downloading new mod data')
-        file_SHAs = {}
-        file_contents = {}
-        for file in self.repoe_content_files:
-            file_SHAs[file.name] = file.sha
-            blob = self.repoe_repo.get_git_blob(file.sha)
-            file_contents[file.name] = orjson.loads(b64decode(blob.content))
 
-        mod_ids = []
-        for mod in file_contents['mods.json'].values():
-            if "Enchantment" in mod['group']:
-                for stat in mod['stats']:
-                    mod_ids.append(stat['id'])
-        
-        mod_strings = []
+    async def download_and_load_files(self, file_names, cache_dir: pathlib.Path, constants: _Constants):
+        file_md5s = {}
+        for file_name in file_names:
+            file_md5 = await download_and_save_blob_data(cache_dir / file_name, constants.user_agent)
+            file_md5s[file_name] = file_md5
+        update_file_md5s(file_md5s)
+        self.load_files(cache_dir)
 
-        for stat in file_contents['stat_translations.json']:
-            id_found = False
-            for id_ in stat['ids']:
-                if id_ in mod_ids:
-                    id_found = True
-                    break
-            if not id_found:
-                continue
-
-            for x in stat['English']:
-                mod_strings.append(unexact_mod(x['string'].format(*x['format']).lower()))
-
-        with gzip.open(path / 'mods.json.gz', 'wb') as f:
-            f.write(orjson.dumps(mod_strings))
-
-        with (path / 'file_SHAs.json').open('wb') as f:
-            f.write(orjson.dumps(file_SHAs))
-        return mod_strings
+    def load_files(self, cache_dir):
+        self.mods = set(load_mods(cache_dir))
 
 
-def load_SHAs(path: pathlib.Path):
-    path /= 'file_SHAs.json'
+async def find_changed_files_by_md5(constants: _Constants):
+    local_md5s = load_md5s(constants.mod_dir)
+    changed_files = []
+    for file_name, local_md5 in local_md5s.items():
+        remote_md5 = await get_blob_file_md5(file_name, constants.user_agent)
+        if remote_md5 != local_md5:
+            changed_files.append(file_name)
+    return changed_files
+
+
+def update_file_md5s(path: pathlib.Path, file_md5s):
+    current_md5s = load_md5s(path)
+    current_md5s.update(file_md5s)
+    save_json_zipped_file(current_md5s)
+
+
+def load_json_zipped_file(path: pathlib.Path):
     if path.exists():
         try:
             with path.open(encoding='utf-8') as f:
                 content = f.read()
-                file_SHAs = orjson.loads(content)
-            return file_SHAs
+                json_content = orjson.loads(content)
+            return json_content
         except orjson.JSONDecodeError:
             # delete broken files when we find them
             path.unlink()
     raise errors.ModDataNotFound
 
+
+def save_json_zipped_file(path: pathlib.Path, content: dict):
+    with gzip.open(path, 'wb') as f:
+        f.write(orjson.dumps(content))
+
+
+def load_md5s(path: pathlib.Path):
+    path /= 'file_md5s.json'
+    return load_json_zipped_file(path)
+
+
 def load_mods(path: pathlib.Path):
-    path /= 'mods.json.gz'
-    if path.exists():
-        try:
-            with gzip.open(path) as f:
-                content = f.read().decode('utf8')
-                mods = orjson.loads(content)
-            return mods
-        except orjson.JSONDecodeError:
-            # delete broken files when we find them
-            path.unlink()
-    
-    raise errors.ModDataNotFound
+    path /= _MOD_FILE_NAME
+    return load_json_zipped_file(path)
