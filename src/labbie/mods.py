@@ -30,7 +30,6 @@ class Mods:
 
         self._raw_mods = resource_manager.mods
 
-        print(self._raw_mods)
         self.helm_mod_info = self._build_helm_mod_info(self._raw_mods['helmet'])  # exact mod -> HelmModInfo
 
     @functools.cached_property
@@ -112,3 +111,5 @@ class Mods:
     def _fix_krangled_helm_mods(self, helm_mod_info: Dict[str, HelmModInfo]):
         helm_mod_info['Fireball Always Ignites'].display = False
         helm_mod_info['Fireball has +30% chance to Ignite'].display = True
+        helm_mod_info['Burning Arrow Always Ignites'].display = False
+        helm_mod_info['Burning Arrow has +30% chance to Ignite'].display = True
