@@ -40,7 +40,10 @@ class Mods:
     def helm_display_mods(self):
         return sorted(k for k, v in self.helm_mod_info.items() if v.display)
 
-    def _build_helm_mod_info(self, mods: List[List[Tuple[str, List[str], List[int]]]]) -> Dict[str, HelmModInfo]:
+    def _build_helm_mod_info(
+        self,
+        mods: List[List[Tuple[str, List[str], List[Union[int, str]]]]]
+    ) -> Dict[str, HelmModInfo]:
         result = {}
         for index, mod_variants in enumerate(mods):
             trade_text = None

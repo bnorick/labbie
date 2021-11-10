@@ -366,6 +366,7 @@ class ResultWidget(base.BaseWidget):
         layout_result.addWidget(lbl_name, 1)
         widget_result.setLayout(layout_result)
 
+        widget_result.adjustSize()
         item_result.setSizeHint(widget_result.sizeHint())
 
         list_widget.setItemWidget(item_result, widget_result)
