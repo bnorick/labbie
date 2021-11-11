@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "labbie"
-version = "0.1.0"
+version = "0.6.0"
 description = "Lab enchant assistant"
 authors = ["Brandon Norick <b.norick@gmail.com>"]
 
@@ -26,6 +26,7 @@ datrie = "^0.8.2"
 pytest = "^5.2"
 flake8 = "^4.0.1"
 cx-Freeze = "^6.8.1"
+poetry2setup = "^1.0.0"
 
 [tool.poetry.scripts]
 labbie = "labbie.__main__:main"

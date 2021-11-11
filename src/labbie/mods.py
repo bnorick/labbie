@@ -144,6 +144,8 @@ class Mods:
                 enchant = ''.join(parts)
                 if enchant in trie:
                     enchants.append(enchant)
+                elif len(keys := trie.keys(enchant)) == 1:
+                    enchants.append(keys[0])
                 parts = []
 
             state.rewind()
@@ -155,6 +157,8 @@ class Mods:
             enchant = ''.join(parts)
             if enchant in trie:
                 enchants.append(enchant)
+            elif len(keys := trie.keys(enchant)) == 1:
+                enchants.append(keys[0])
 
         return enchants
 

@@ -86,7 +86,7 @@ class AppPresenter:
                     self.show(keys.ErrorWindowKey('Enchants have not finished loading.'))
                     return
 
-            if league_matches or daily_matches:
+            if league_matches is not None or daily_matches is not None:
                 result = _Result(title=enchant, search=enchant, league_result=league_matches, daily_result=daily_matches, base=False)
                 results.append(result)
 

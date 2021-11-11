@@ -1,17 +1,22 @@
 import pathlib
+import re
 from typing import Optional
 
+import cv2 as cv
 import loguru
+import numpy as np
 from PIL import ImageGrab, Image
 import pytesseract
-import cv2 as cv
-import numpy as np
 
 from labbie import bounds
 from labbie import utils
 
 logger = loguru.logger
 _Bounds = bounds.Bounds
+_KRANGLES = [
+    ('Sammon', 'Summon'),
+
+]
 
 pytesseract.pytesseract.tesseract_cmd = str(utils.bin_dir() / 'tesseract' / 'tesseract.exe')
 
@@ -36,5 +41,9 @@ def parse_image(image, save_path, dilate):
     if save_path:
         Image.fromarray(im_bw).save(save_path / 'full_processed.png')
     enchants = pytesseract.image_to_string(im_bw, config='--psm 12').replace('\x0c', '').replace('’', "'")
-    enchants = [e for e in enchants.split('\n') if e]
+    enchants = [e.strip() for e in enchants.split('\n') if e]
     return enchants
+
+
+def _fix_krangled_ocr(enchants):
+    pass
