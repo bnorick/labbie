@@ -6,11 +6,13 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 import injector
 import pyperclip
 from PyQt5 import QtCore
+from PyQt5 import QtGui
 from PyQt5 import QtWidgets
 
 from labbie.ui import base
 from labbie.ui import clickable_label
 from labbie.ui import switch
+from labbie.ui import transparent_window
 from labbie.ui import utils
 
 Qt = QtCore.Qt
@@ -83,6 +85,8 @@ class ResultWidget(base.BaseWidget):
         self._current_results = None
         self._results_str = ''
 
+        self.widget_hint = None
+
         self.widget_type = QtWidgets.QWidget(self)
         self.toggle_type = switch.Toggle(self.widget_type, thumb_radius=8, track_radius=5)
         self.lbl_league = clickable_label.ClickableLabel(self.widget_type)
@@ -92,6 +96,7 @@ class ResultWidget(base.BaseWidget):
         self.btn_price_check = QtWidgets.QPushButton('Price Check', self)
         self.btn_copy = QtWidgets.QPushButton('Copy Results', self)
         self.lbl_selected_stats = QtWidgets.QLabel(self)
+        self.btn_close = QtWidgets.QPushButton('Close', self)
 
         self.stack_results = QtWidgets.QStackedWidget(self)
         self._widget_league_results = None
@@ -120,7 +125,8 @@ class ResultWidget(base.BaseWidget):
         layout_right = QtWidgets.QVBoxLayout()
         layout_right.addWidget(self.btn_price_check)
         layout_right.addWidget(self.btn_copy)
-        layout_right.addWidget(self.lbl_selected_stats)
+        layout_right.addWidget(self.lbl_selected_stats, 1)
+        layout_right.addWidget(self.btn_close)
 
         layout = QtWidgets.QGridLayout()
         layout.addLayout(layout_top, 0, 0, 1, 2)
@@ -132,6 +138,13 @@ class ResultWidget(base.BaseWidget):
         self.lbl_league.clicked.connect(lambda: self.toggle_type.setChecked(False))
         self.lbl_daily.clicked.connect(lambda: self.toggle_type.setChecked(True))
         self.btn_copy.clicked.connect(lambda _: pyperclip.copy(self._results_str))
+
+        def close_self():
+            tab_widget = self.parentWidget().parentWidget()
+            index = tab_widget.indexOf(self)
+            tab_widget.removeTab(index)
+
+        self.btn_close.clicked.connect(close_self)
 
     def _on_results_selection_changed(self):
         selected = self.stack_results.currentWidget().selectedItems()
@@ -169,6 +182,8 @@ class ResultWidget(base.BaseWidget):
 
         if not menu_items:
             return
+
+        self.hide_hints()
 
         menu = QtWidgets.QMenu(self)
         for section, items in menu_items.items():
@@ -210,6 +225,40 @@ class ResultWidget(base.BaseWidget):
                         source._displayed_context_menu_indices.add(result.index)
 
         source._displayed_context_menu_indices.add(context_menu_index)
+
+    def show_right_click_hint(self):
+        if self.widget_hint:
+            self.widget_hint.show()
+        else:
+            widget = transparent_window.TransparentWindow(parent=self, close_on_click=True)
+
+            pixmap = utils.recolored_icon('info.svg', 83).pixmap(20, 20)
+            icon = QtWidgets.QLabel(widget)
+            icon.setPixmap(pixmap)
+
+            label = QtWidgets.QLabel('Right clicking rare bases\nshows additional filtering', widget)
+            label.setStyleSheet('QLabel { color: rgb(37, 37, 37); font-size: 10pt; }')
+
+            layout = QtWidgets.QHBoxLayout()
+            layout.addWidget(icon, 0)
+            layout.addWidget(label)
+            widget.setLayout(layout)
+
+            widget.setMinimumWidth(130)
+            widget.adjustSize()
+
+            results_geom = self.stack_results.geometry()
+            delta = results_geom.topRight() - widget.geometry().topRight()
+            widget.move(delta - QtCore.QPoint(50, -12))
+            widget.show()
+
+            self.widget_hint = widget
+
+    def hide_hints(self):
+        if self.widget_hint:
+            self.widget_hint.close()
+            self.widget_hint = None
+
 
     # def _update_selected_stats(self, selected: List[QtWidgets.QListWidgetItem] = None):
     #     if selected is None:

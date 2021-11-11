@@ -10,6 +10,7 @@ import injector
 import loguru
 
 from labbie import bases
+from labbie import constants
 from labbie import enchants
 from labbie import mods
 from labbie import result
@@ -139,16 +140,19 @@ class ResultData:
 class ResultWidgetPresenter:
 
     @injector.inject
-    def __init__(self, bases_: bases.Bases, mods_: mods.Mods, view: view.ResultWidget):
-        self._view = view
+    def __init__(self, constants_: constants.Constants, bases_: bases.Bases, mods_: mods.Mods, view: view.ResultWidget):
+        self._constants = constants_
         self._bases = bases_
         self._mods = mods_
+        self._view = view
 
         self._mod = None
 
         # NOTE: connecting the clicked signal to self.on_price_check directly as the slot wasn't working
         # for some reason, no clue.
         self._view.set_price_check_handler(lambda: self.on_price_check())
+
+        self._show_hints = None
 
     @property
     def widget(self):
@@ -178,6 +182,9 @@ class ResultWidgetPresenter:
 
         if result.base:
             self._view.set_price_check_visible(False)
+        else:
+            self._show_hints = not (self._constants.data_dir / 'result_hints_shown').exists()
+
         self._view.set_results(
             result.search,
             league_results,
@@ -475,7 +482,10 @@ class ResultWidgetPresenter:
             webbrowser.open_new_tab(result.data.price_check_url(mod_info.trade_stat_id, mod_info.trade_stat_value, delay))
 
     def on_selection_changed(self):
-        pass
+        if self._show_hints:
+            self._view.show_right_click_hint()
+            (self._constants.data_dir / 'result_hints_shown').touch()
+            self._show_hints = False
         # selected = self._view.get_selected_data()
 
         # if not selected:

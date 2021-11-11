@@ -144,7 +144,7 @@ class Mods:
                 enchant = ''.join(parts)
                 if enchant in trie:
                     enchants.append(enchant)
-                elif len(keys := trie.keys(enchant)) == 1:
+                elif len(keys := trie.keys(enchant)) == 1 and len(enchant) > 20:
                     enchants.append(keys[0])
                 parts = []
 
@@ -157,7 +157,7 @@ class Mods:
             enchant = ''.join(parts)
             if enchant in trie:
                 enchants.append(enchant)
-            elif len(keys := trie.keys(enchant)) == 1:
+            elif len(keys := trie.keys(enchant)) == 1 and len(enchant) > 20:
                 enchants.append(keys[0])
 
         return enchants

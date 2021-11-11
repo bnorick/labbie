@@ -96,7 +96,11 @@ class AppPresenter:
                 results.append(result)
 
         if results:
-            self.show(keys.SearchWindowKey(results, clear=self._config.ocr.clear_previous))
+            key = keys.SearchWindowKey(results, clear=self._config.ocr.clear_previous)
+        else:
+            key = keys.SearchWindowKey()
+        self.show(key)
+
 
     def show(self, key: 'keys._Key'):
         if not isinstance(key, keys._Key):
