@@ -1,6 +1,5 @@
 import pathlib
-import re
-from typing import Optional
+from typing import List, Optional
 
 import cv2 as cv
 import loguru
@@ -12,19 +11,17 @@ from labbie import bounds
 from labbie import utils
 
 logger = loguru.logger
-_Bounds = bounds.Bounds
 _KRANGLES = [
     ('Sammon', 'Summon'),
-
 ]
 
 pytesseract.pytesseract.tesseract_cmd = str(utils.bin_dir() / 'tesseract' / 'tesseract.exe')
 
 
-def read_enchants(bounds: _Bounds, save_path: Optional[pathlib.Path], dilate: Optional[bool] = False):
+def read_enchants(bounds_: bounds.Bounds, save_path: Optional[pathlib.Path], dilate: Optional[bool] = False):
     if save_path and not save_path.exists():
         save_path.mkdir(exist_ok=True, parents=True)
-    image = ImageGrab.grab(bounds.as_tuple(), all_screens=True)
+    image = ImageGrab.grab(bounds_.as_tuple(), all_screens=True)
     if save_path:
         image.save(save_path / 'full.png')
     enchants = parse_image(image, save_path, dilate)
@@ -42,8 +39,13 @@ def parse_image(image, save_path, dilate):
         Image.fromarray(im_bw).save(save_path / 'full_processed.png')
     enchants = pytesseract.image_to_string(im_bw, config='--psm 12').replace('\x0c', '').replace('’', "'")
     enchants = [e.strip() for e in enchants.split('\n') if e]
-    return enchants
+    return _fix_krangled_ocr(enchants)
 
 
-def _fix_krangled_ocr(enchants):
-    pass
+def _fix_krangled_ocr(enchants: List[str]):
+    unkrangled_enchants = []
+    for enchant in enchants:
+        for krangle in _KRANGLES:
+            enchant = enchant.replace(*krangle)
+        unkrangled_enchants.append(enchant)
+    return unkrangled_enchants
