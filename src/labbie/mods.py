@@ -1,3 +1,4 @@
+import collections
 import dataclasses
 from logging import log
 import string
@@ -125,38 +126,37 @@ class Mods:
     def get_mod_list_from_ocr_results(self, enchant_list):
         trie = self.mod_trie
         logger.debug(f'Data from OCR{enchant_list}')
-        full_enchants = []
-        potential_enchants = []
-        for partial_enchant in enchant_list:
-            if partial_enchant == '':
+
+        state = datrie.State(trie)
+        parts = []
+        enchants = []
+        for part in enchant_list:
+            to_walk = f' {part}' if parts else part
+            if state.walk(to_walk):
+                parts.append(to_walk)
                 continue
-            partial_enchant = partial_enchant.replace('’', "'")
-            # continuation of enchant
-            if potential_enchants:
-                is_partial_enchant = False
-                reduced_potential_enchants = []
-                for enchant in potential_enchants:
-                    if partial_enchant in enchant:
-                        reduced_potential_enchants.append(enchant)
-                        if enchant not in full_enchants:
-                            full_enchants.append(enchant)
-                        is_partial_enchant = True
-                potential_enchants = reduced_potential_enchants
-                if is_partial_enchant:
-                    continue
-                # multiple potential enchants still, but the extras will be filtered out
-                # when doing comparison against the trade searches.
-                if len(potential_enchants) > 1:
-                    full_enchants.extend(potential_enchants)
-            potential_enchants = trie.keys(partial_enchant)
 
-            if len(potential_enchants) == 1:
-                full_enchants.extend(potential_enchants)
+            if not parts:
+                state.rewind()
+                continue
 
-        if len(potential_enchants) > 1:
-            full_enchants.extend(potential_enchants)
-        logger.info(f'found {full_enchants=}')
-        return full_enchants
+            if parts:
+                enchant = ''.join(parts)
+                if enchant in trie:
+                    enchants.append(enchant)
+                parts = []
+
+            state.rewind()
+            if state.walk(part):
+                parts.append(part)
+                continue
+
+        if parts:
+            enchant = ''.join(parts)
+            if enchant in trie:
+                enchants.append(enchant)
+
+        return enchants
 
     def _fix_krangled_helm_mods(self, helm_mod_info: Dict[str, HelmModInfo]):
         helm_mod_info['Fireball Always Ignites'].display = False
