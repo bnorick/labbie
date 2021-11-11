@@ -5,7 +5,7 @@ from PyQt5 import QtCore
 from PyQt5 import QtGui
 from PyQt5 import QtWidgets
 
-from labbie.ui import utils as utils
+from labbie.ui import utils
 
 
 class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
@@ -25,6 +25,7 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
         self.setContextMenu(self.menu)
 
         self.activated.connect(self._on_activated)
+        utils.register_exit_handler(self.hide)
 
     def exit(self):
         QtWidgets.QApplication.exit()

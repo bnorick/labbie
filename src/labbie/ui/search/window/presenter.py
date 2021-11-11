@@ -13,6 +13,9 @@ class SearchWindowPresenter:
 
         self._view.signal_close.connect(self.close)
 
+    def reset_position(self):
+        self._widget_presenter.reset_position()
+
     def populate_view(self, results, clear):
         self._widget_presenter.populate_view(results, clear)
 

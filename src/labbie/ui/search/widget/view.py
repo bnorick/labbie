@@ -1,5 +1,8 @@
+import atexit
 from typing import Dict, List, Optional
+
 from PyQt5 import QtCore
+from PyQt5 import QtGui
 from PyQt5 import QtWidgets
 
 from labbie.ui import base
@@ -35,6 +38,9 @@ class SearchWidget(base.BaseWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+
+        self._position_path = None
+        self._position = None
 
         lbl_mod = QtWidgets.QLabel('Enchant', self)
         self.combo_mod = fuzzy_combo.FuzzyComboBox(self)
@@ -96,13 +102,23 @@ class SearchWidget(base.BaseWidget):
         self.setLayout(layout)
 
         self.setWindowTitle('Search Enchants')
-        self.center_on_screen(adjust_size=False)
+        utils.register_exit_handler(self._at_exit)
 
     def on_tab_middle_click(self, index):
         self.tabs.removeTab(index)
 
-    def set_uber_mod_handler(self, handler):
-        self._connect_signal_to_slot(self.chk_uber_mod.toggled, handler)
+    def get_position(self):
+        pos = self.mapToGlobal(self.pos())
+        return pos.x(), pos.y()
+
+    def set_position(self, position):
+        if not position:
+            self.center_on_screen(adjust_size=False)
+        else:
+            self.move(*position)
+
+    def set_position_path(self, path):
+        self._position_path = path
 
     def set_search_mod_handler(self, handler):
         self._connect_signal_to_slot(self.btn_search_mod.clicked, handler)
@@ -162,6 +178,12 @@ class SearchWidget(base.BaseWidget):
     def clear_results(self):
         for _ in range(self.tabs.count()):
             self.tabs.removeTab(0)
+
+    def _at_exit(self):
+        if self._position_path:
+            with self._position_path.open('w', encoding='utf8') as f:
+                x, y = self.get_position()
+                f.write(f'{x} {y}')
 
     # Properties
     @utils.combo_box_property

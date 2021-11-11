@@ -1,9 +1,11 @@
 import pathlib
 from typing import Tuple, Union
 
-from PyQt5 import QtGui
+from PyQt5 import QtGui, QtWidgets
 
 from labbie import utils
+
+_OBSERVED_ABOUTTOQUIT_SIGNAL = False
 
 
 def asset_path(subpath: Union[str, pathlib.Path]):
@@ -25,6 +27,22 @@ def recolored_icon(asset, rgb: Union[int, Tuple[int, int, int]]):
     qp.fillRect(img.rect(), QtGui.QColor.fromRgb(*rgb))
     qp.end()
     return QtGui.QIcon(img)
+
+# NOTE: hack to work around aboutToQuit firing at app initialization
+def _exit_handler_wrapper(handler):
+    def wrapped():
+        global _OBSERVED_ABOUTTOQUIT_SIGNAL
+        if not _OBSERVED_ABOUTTOQUIT_SIGNAL:
+            _OBSERVED_ABOUTTOQUIT_SIGNAL = True
+        else:
+            handler()
+    return wrapped
+
+
+def register_exit_handler(handler):
+    if not _OBSERVED_ABOUTTOQUIT_SIGNAL:
+        handler = _exit_handler_wrapper(handler)
+    QtWidgets.QApplication.instance().aboutToQuit.connect(handler)
 
 
 class CheckboxProperty:

@@ -15,6 +15,7 @@ from labbie.ui.search.widget import view
 from labbie.ui.result.widget import presenter as result
 
 logger = loguru.logger
+_POSITION_FILE = 'position.txt'
 
 
 class SearchPresenter:
@@ -45,6 +46,13 @@ class SearchPresenter:
         self._view.set_all_handler(self.on_all)
         self._view.set_screen_capture_handler(self.on_screen_capture)
 
+        position = None
+        if (position_path := self._constants.data_dir / _POSITION_FILE).is_file():
+            with position_path.open('r', encoding='utf8') as f:
+                position = [int(val) for val in f.read().split()]
+        self._view.set_position(position)
+        self._view.set_position_path(position_path)
+
         # TODO(bnorick): attach to enchants so that we can update the dropdowns when enchants change
         influences = ['Shaper', 'Elder', 'Crusader', 'Redeemer', 'Hunter', 'Warlord']
         self._view.set_influence_options(influences, influences)
@@ -57,6 +65,9 @@ class SearchPresenter:
     @property
     def widget(self):
         return self._view
+
+    def reset_position(self):
+        self._view.set_position(None)
 
     def cleanup(self):
         pass

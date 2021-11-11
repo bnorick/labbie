@@ -54,6 +54,11 @@ class AppPresenter:
     def _ocr_hotkey_pressed(self):
         self.screen_capture(exact=True)
 
+    def reset_window_positions(self):
+        key = keys.SearchWindowKey()
+        if presenter := self.presenters.get(key):
+            presenter.reset_position()
+
     def screen_capture(self):
         if not self._app_state.league_enchants.enabled and not self._app_state.daily_enchants.enabled:
             self.show(keys.ErrorWindowKey('No enchant scrapes are enabled, please edit the settings.'))

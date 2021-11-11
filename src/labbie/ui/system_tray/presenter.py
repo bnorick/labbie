@@ -18,11 +18,12 @@ class SystemTrayIconPresenter:
         self._view.set_settings_triggered_handler(self.on_settings_triggered)
         self._view.set_about_triggered_handler(self.on_about_triggered)
 
+        atexit.register(self._at_exit)
+
     def show(self):
         self._view.show()
-        atexit.register(self.try_to_hide)
 
-    def try_to_hide(self):
+    def _at_exit(self):
         try:
             self._view.hide()
         except RuntimeError:
