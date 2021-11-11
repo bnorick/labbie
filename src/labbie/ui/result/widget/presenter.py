@@ -9,6 +9,7 @@ from typing import List, Optional
 import injector
 import loguru
 
+from labbie import bases
 from labbie import enchants
 from labbie import mods
 from labbie import result
@@ -55,6 +56,7 @@ _MAX_DISPLAY_ILVL = 86
 
 @dataclasses.dataclass
 class ResultData:
+    name: str
     base: str
     unique: bool
     ilvl: Optional[int]
@@ -84,7 +86,7 @@ class ResultData:
                 'option': 'online'
             },
             'stats': stats,
-            'term': self.base
+            'type': self.base
         }
 
         search = {
@@ -96,7 +98,9 @@ class ResultData:
 
         query_filters = {}
 
-        if not self.unique:
+        if self.unique:
+            query['name'] = self.name
+        else:
             query_filters['type_filters'] = {
                 'filters': {
                     'rarity': {
@@ -135,8 +139,9 @@ class ResultData:
 class ResultWidgetPresenter:
 
     @injector.inject
-    def __init__(self, mods_: mods.Mods, view: view.ResultWidget):
+    def __init__(self, bases_: bases.Bases, mods_: mods.Mods, view: view.ResultWidget):
         self._view = view
+        self._bases = bases_
         self._mods = mods_
 
         self._mod = None
@@ -202,7 +207,7 @@ class ResultWidgetPresenter:
                 display_result = view.DisplayResult(
                     count=count,
                     text=influence,
-                    data=ResultData(base=base, unique=False, ilvl=ilvl, influence=influence),
+                    data=ResultData(name=base, base=base, unique=False, ilvl=ilvl, influence=influence),
                     indent_level=2 if ilvl else 1,
                     context_menu_items=sub_context_menu_items
                 )
@@ -230,7 +235,7 @@ class ResultWidgetPresenter:
                 display_result = view.DisplayResult(
                     count=count,
                     text=influence,
-                    data=ResultData(base=base, unique=False, ilvl=ilvl, influence=influence),
+                    data=ResultData(name=base, base=base, unique=False, ilvl=ilvl, influence=influence),
                     indent_level=2 if ilvl else 1,
                     context_menu_items=sub_context_menu_items
                 )
@@ -285,7 +290,7 @@ class ResultWidgetPresenter:
                     display=view.DisplayResult(
                         count=count,
                         text=f'i{_MAX_DISPLAY_ILVL}+',
-                        data=ResultData(base=base, unique=False, ilvl=_MAX_DISPLAY_ILVL, influence=influence),
+                        data=ResultData(name=base, base=base, unique=False, ilvl=_MAX_DISPLAY_ILVL, influence=influence),
                         indent_level=2 if influence else 1,
                         context_menu_items=sub_context_menu_items
                     )
@@ -322,7 +327,7 @@ class ResultWidgetPresenter:
                     display=view.DisplayResult(
                         count=cumulative_total,
                         text=f'i{ilvl}+',
-                        data=ResultData(base=base, unique=False, ilvl=ilvl, influence=influence),
+                        data=ResultData(name=base, base=base, unique=False, ilvl=ilvl, influence=influence),
                         indent_level=2 if influence else 1,
                         context_menu_items=sub_context_menu_items
                     )
@@ -352,7 +357,7 @@ class ResultWidgetPresenter:
                     view.DisplayResult(
                         count=cumulative_total,
                         text=f'i{ilvl}+',
-                        data=ResultData(base=base, unique=False, ilvl=ilvl, influence=influence),
+                        data=ResultData(name=base, base=base, unique=False, ilvl=ilvl, influence=influence),
                         indent_level=2 if influence else 1,
                         context_menu_items=sub_context_menu_items
                     )
@@ -439,10 +444,13 @@ class ResultWidgetPresenter:
             if enchants := rare_bases.get(base):
                 context_menu_items = self._build_context_menu_items(base, enchants)
 
+            unique = base not in rare_bases
+            # krangle the base so that uniques get the actual base type here
+            krangled_base = self._bases.helms[base].base if unique else base
             display_result = view.DisplayResult(
                 count=count,
                 text=base,
-                data=ResultData(base=base, unique=base not in rare_bases, ilvl=None, influence=None),
+                data=ResultData(name=base, base=krangled_base, unique=unique, ilvl=None, influence=None),
                 context_menu_items=context_menu_items
             )
             display_result.index = index  # this is not a constructor arg, needs to be set here

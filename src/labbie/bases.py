@@ -26,12 +26,10 @@ class Bases:
 
     @functools.cached_property
     def helm_display_texts(self):
-        return sorted(helm.display_text for helm in self.helms)
+        return sorted(helm.display_text for helm in self.helms.values())
 
     def _build_helms(self):
-        helms = []
+        helms = {}
         for unique, display_text, base in self._items['helmet']:
-            helms.append(
-                Helm(display_text=display_text, base=base, unique=unique)
-            )
+            helms[display_text] = Helm(display_text=display_text, base=base, unique=unique)
         return helms

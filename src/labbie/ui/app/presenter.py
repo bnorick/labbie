@@ -52,7 +52,7 @@ class AppPresenter:
                 self.show(keys.ErrorWindowKey(Exception(f'Unable to bind hotkey: {val}')))
 
     def _ocr_hotkey_pressed(self):
-        self.screen_capture(exact=True)
+        self.screen_capture()
 
     def reset_window_positions(self):
         key = keys.SearchWindowKey()
