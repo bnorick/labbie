@@ -11,6 +11,7 @@ import qasync
 
 from labbie import config
 from labbie import constants
+from labbie import resources
 from labbie import state
 from labbie import utils
 from labbie.di import module
@@ -90,6 +91,10 @@ async def start(log_filter):
     (constants.helm_enchants_dir / 'daily').mkdir(parents=True, exist_ok=True)
 
     config = injector.get(_Config)
+
+    resource_manager = injector.get(resources.ResourceManager)
+    resource_manager.initialize()
+    await resource_manager._init_task
 
     app_state = injector.get(state.AppState)
     if config.league:

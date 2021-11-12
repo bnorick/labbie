@@ -1,7 +1,10 @@
+import asyncio
 import collections
 import dataclasses
 import datetime
 import enum
+import gzip
+import io
 import pathlib
 import re
 from typing import List, NamedTuple, Optional
@@ -15,10 +18,11 @@ from labbie import errors
 from labbie import mixins
 
 logger = loguru.logger
-_FILENAME_FORMAT = '{date:%Y-%m-%d}.json'
+_FILENAME_FORMAT = '{date:%Y-%m-%d}.json.gz'
 _URL_FORMAT = f'https://labbie.blob.core.windows.net/enchants/{{type}}/{_FILENAME_FORMAT}'
 _VALUE_PATTERN = re.compile(r'-?\d+')
 _HISTORICAL_DAYS = 15
+_REFRESH_DELAY = 5 * 60  # 5 minutes
 _Constants = constants.Constants
 
 
@@ -84,39 +88,34 @@ class Enchants(mixins.ObservableMixin):
 
     def __post_init__(self):
         super().__init__()
+        self._refresh_task = None
 
     def set_enchants(self, date: Optional[datetime.date], enchants: Optional[List[Enchant]]):
         if enchants is not None:
             self.state = State.LOADED
         else:
             self.state = State.DISABLED
+            if self._refresh_task:
+                self._refresh_task.cancel()
+                self._refresh_task = None
         self.enchants = enchants
         self.date = date
-        self.notify(enchants=enchants)
-
-    def load(self, path):
-        # TODO: make this async
-        try:
-            date, enchants_ = load_enchants(path)
-            self.date = date
-            self.set_enchants(date, enchants_)
-        except errors.EnchantDataNotFound:
-            self.state = State.MISSING
-            raise
+        self.notify(enchants=enchants, date=date, _log=False)
 
     def refresh_needed(self):
         return self.date != datetime.date.today()
 
-    def disable(self):
-        self.state = State.DISABLED
-
     async def download_or_load(self, constants: _Constants):
+        logger.info(f'starting refresh task for {self.type}')
+        self._refresh_task = asyncio.create_task(self._download_when_available(constants))
+
         cache_dir = constants.helm_enchants_dir / self.type
+        today = today_utc()
 
         # first try to load from cache if most recent data is cached
         try:
             self.state = State.LOADING
-            date, enchants = load_enchants(cache_dir, date=now())
+            date, enchants = load_enchants(cache_dir, date=today)
             self.set_enchants(date, enchants)
             return
         except errors.EnchantDataNotFound:
@@ -157,6 +156,29 @@ class Enchants(mixins.ObservableMixin):
             # _HISTORICAL_DAYS
             logger.debug(f'{first_cached=} {last_cached=} {last_downloadable=}')
             raise
+
+    async def _download_when_available(self, constants: _Constants):
+        await asyncio.sleep(15)
+        cache_dir = constants.helm_enchants_dir / self.type
+        while True:
+            if self.date == today_utc():
+                now = datetime.datetime.now(datetime.timezone.utc)
+                tomorrow = (now + datetime.timedelta(days=1)).replace(hour=0, minute=0, second=0)
+                duration = (tomorrow - now).total_seconds()
+                logger.info(f'{self.type} scrape is fresh, sleeping until tomorrow ({duration=})')
+                await asyncio.sleep(duration)
+
+            while True:
+                logger.info(f'checking if fresh {self.type} scrape is downloadable')
+                available = await last_downloadable_date(constants.user_agent, self.type, 1)
+                if available:
+                    self.state = State.DOWNLOADING
+                    date, enchants = await download(cache_dir, self.type, constants.user_agent,
+                                                    past_days=_HISTORICAL_DAYS)
+                    self.set_enchants(date, enchants)
+                    break
+                else:
+                    await asyncio.sleep(_REFRESH_DELAY)
 
     @property
     def enabled(self):
@@ -207,12 +229,12 @@ class Enchants(mixins.ObservableMixin):
         return find_matching_helms(self.enchants, helm)
 
 
-def now():
+def today_utc():
     return datetime.datetime.now(datetime.timezone.utc).date()
 
 
 def refresh_needed(cache_dir: pathlib.Path):
-    path = cache_dir / _FILENAME_FORMAT.format(date=now())
+    path = cache_dir / _FILENAME_FORMAT.format(date=today_utc())
     return not path.exists()
 
 
@@ -242,7 +264,7 @@ def cached_dates(cache_dir: pathlib.Path):
 
 
 async def last_downloadable_date(user_agent: str, type_: str, past_days):
-    today = now()
+    today = today_utc()
     async with aiohttp.ClientSession(headers={'User-Agent': user_agent}) as session:
         for days_back in range(past_days):
             date = today - datetime.timedelta(days=days_back)
@@ -255,23 +277,32 @@ async def last_downloadable_date(user_agent: str, type_: str, past_days):
 
 
 async def download(cache_dir: pathlib.Path, type_: str, user_agent: str, past_days: int):
-    logger.debug(f'downloading {type_} enchants')
-    today = now()
+    logger.info(f'downloading {type_} enchants')
+    today = today_utc()
     async with aiohttp.ClientSession(headers={'User-Agent': user_agent}) as session:
-        for days_back in range(15):
+        for days_back in range(past_days):
             date = today - datetime.timedelta(days=days_back)
             async with session.get(_URL_FORMAT.format(type=type_, date=date)) as resp:
                 if resp.status == 404:
                     continue
 
-                content = await resp.text(encoding='utf8')
-                with (cache_dir / _FILENAME_FORMAT.format(date=date)).open('w', encoding='utf8') as f:
+                logger.info(f'found data for {date=:%Y-%m-%d}')
+                content = await resp.content.read()
+                path = cache_dir / _FILENAME_FORMAT.format(date=date)
+                with path.open('wb') as f:
                     f.write(content)
-
-                enchants = [Enchant(*vals) for vals in orjson.loads(content)]
+                with gzip.open(io.BytesIO(content)) as f:
+                    decompressed_content = f.read()
+                try:
+                    enchants = [Enchant(*vals) for vals in orjson.loads(decompressed_content)]
+                except orjson.JSONDecodeError:
+                    logger.error(f'Invalid enchant data downloaded for {date=}')
+                    path.unlink()
+                    continue
                 return date, enchants
 
-        # if nothing was found for the 15 days, raise
+        logger.error(f'no data found for the last {past_days} days, aborting')
+        # if nothing was found for the window, raise
         raise errors.EnchantDataNotFound
 
 
@@ -279,16 +310,16 @@ def load_enchants(cache_dir: pathlib.Path, date=None):
     if date is not None:
         dates = (date, )
     else:
-        today = now()
+        today = today_utc()
         dates = (today - datetime.timedelta(days=days_back) for days_back in range(15))
 
     for date in dates:
         path = cache_dir / _FILENAME_FORMAT.format(date=date)
         if path.exists():
             try:
-                with path.open(encoding='utf8') as f:
-                    content = f.read()
-                    return date, [Enchant(*vals) for vals in orjson.loads(content)]
+                with gzip.open(path) as f:
+                    content = f.read().decode('utf8')
+                return date, [Enchant(*vals) for vals in orjson.loads(content)]
             except orjson.JSONDecodeError:
                 # delete broken files when we find them
                 path.unlink()
@@ -302,7 +333,7 @@ def find_matching_enchants(enchants: List[Enchant], target: str):
     matches = []
     for enchant in enchants:
         for mod in enchant.mods:
-            if target in mod.lower() or target in unexact_mod(mod).lower():
+            if target in mod.lower() or target in inexact_mod(mod).lower():
                 matches.append(enchant)
     return matches
 
@@ -315,7 +346,7 @@ def find_matching_helms(enchants: List[Enchant], target: Helm):
     return matches
 
 
-def unexact_mod(mod):
+def inexact_mod(mod):
     return _VALUE_PATTERN.sub('#', mod)
 
 
@@ -328,7 +359,7 @@ def enchant_summary(enchants: List[Enchant]):
     for enchant in enchants:
         items[enchant.display_name] += 1
         if not enchant.unique:
-            influences[enchant.item_base][', '.join(enchant.influences) or 'None'] += 1
+            influences[enchant.item_base][', '.join(enchant.influences) or 'Uninfluenced'] += 1
             ilvls[enchant.item_base].append(enchant.ilvl)
             rare_bases.append(enchant.item_base)
 
@@ -373,7 +404,7 @@ def base_summary(enchants: List[Enchant]):
 
     for enchant in enchants:
         for mod in enchant.mods:
-            mods[unexact_mod(mod)] += 1
+            mods[inexact_mod(mod)] += 1
 
     summary = [f'  {count:>3d} {val}' for val, count in mods.most_common()]
 

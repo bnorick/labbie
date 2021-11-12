@@ -31,3 +31,11 @@ class NoSuchBase(Exception):
         if error is None:
             error = 'No matching base.'
         super().__init__(error)
+
+
+class FailedToDownloadResource(Exception):
+    def __init__(self, remote_resource: str):
+        error = 'Failed to download resource {}.'
+        super().__init__(error)
+
+

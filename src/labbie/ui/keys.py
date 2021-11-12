@@ -25,6 +25,9 @@ class _Key(abc.ABC):
     def show(self, presenter):
         presenter.show()
 
+    def toggle(self, presenter):
+        presenter.toggle()
+
 
 @dataclasses.dataclass(frozen=True)
 class _PopulatableKey(_Key):

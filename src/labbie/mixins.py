@@ -1,14 +1,20 @@
 import collections
 import copy
 import dataclasses
+import enum
 from typing import Any, Callable, Dict, Iterable, Optional, Sequence, Set, Union
 
 import dacite
 import loguru
 
-from labbie import sentinels
-
 logger = loguru.logger
+
+
+class Sentinel(enum.Enum):
+    NOT_LOADED = enum.auto()
+    NOT_SET = enum.auto()
+    NOT_CONFIGURED = enum.auto()
+    DEFAULT = enum.auto()
 
 
 @dataclasses.dataclass
@@ -75,16 +81,17 @@ class ObservableMixin:
                         self._event_observer_handlers[event].discard(observer_handlers)
                         observer_handlers.event_handlers.pop(event, None)
 
-    def notify(self, **kwargs):
+    def notify(self, _log=True, **kwargs):
         if kwargs:
             for event, args in kwargs.items():
                 if not isinstance(args, tuple):
                     args = (args, )
-                logger.debug(f'{self.__class__.__module__}.{self.__class__.__name__} notify, {event=} {args=}')
+                if _log:
+                    logger.debug(f'{self.__class__.__module__}.{self.__class__.__name__} notify, {event=} {args=}')
                 for handler in self._event_observer_handlers[event]:
                     handler.event_handlers[event](*args)
-
-        logger.debug(f'{self.__class__.__module__}.{self.__class__.__name__} generic notify')
+        if _log:
+            logger.debug(f'{self.__class__.__module__}.{self.__class__.__name__} generic notify')
         # generic notify to call generic handler
         for handler in self._generic_observer_handlers:
             handler.generic_handler(self)
@@ -124,7 +131,7 @@ class SerializableMixin:
         # safe to just remove it
         d = {}
         for k, v in result:
-            if k.startswith('_') or v is sentinels.Sentinel.NOT_LOADED:
+            if k.startswith('_') or v is Sentinel.NOT_LOADED:
                 continue
             d[k] = v
         return d

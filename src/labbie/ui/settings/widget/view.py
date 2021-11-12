@@ -37,6 +37,10 @@ class SettingsWidget(base.BaseWidget):
         self.edit_bottom = QtWidgets.QLineEdit(self)
         self.btn_select_bounds = QtWidgets.QPushButton('Select', self)
 
+        self.btn_reset_window_positions = QtWidgets.QPushButton('Reset Window Positions', self)
+        size = self.btn_reset_window_positions.sizeHint()
+        self.btn_reset_window_positions.setMinimumWidth(size.width() + 12)
+
         self.btn_save = QtWidgets.QPushButton('Save', self)
         self.btn_cancel = QtWidgets.QPushButton('Cancel', self)
 
@@ -95,6 +99,7 @@ class SettingsWidget(base.BaseWidget):
         group_screen_capture.setLayout(layout_screen_capture)
 
         layout_actions = QtWidgets.QHBoxLayout()
+        layout_actions.addWidget(self.btn_reset_window_positions)
         layout_actions.addStretch(1)
         layout_actions.addWidget(self.btn_save)
         layout_actions.addWidget(self.btn_cancel)
@@ -108,10 +113,16 @@ class SettingsWidget(base.BaseWidget):
         self.btn_cancel.clicked.connect(self.close)
 
         self.setWindowTitle('Settings')
-        self.setFixedSize(layout.sizeHint())
+        self.center_on_screen()
+
+    def set_select_button_text(self, text):
+        self.btn_select_bounds.setText(text)
 
     def set_select_bounds_handler(self, handler):
         self._connect_signal_to_slot(self.btn_select_bounds.clicked, handler)
+
+    def set_reset_window_positions_handler(self, handler):
+        self._connect_signal_to_slot(self.btn_reset_window_positions.clicked, handler)
 
     def set_save_handler(self, handler):
         self._connect_signal_to_slot(self.btn_save.clicked, handler)

@@ -104,6 +104,7 @@ class Constants(BaseConstants):
     data_dir: pathlib.Path = _DEFAULT_DATA_DIR
     config_dir: pathlib.Path = _DEFAULT_CONFIG_DIR
     user_agent: str = f'Labbie v{version.__version__}'
+    dilate: bool = False
 
     @functools.cached_property
     def logs_dir(self):
@@ -116,6 +117,10 @@ class Constants(BaseConstants):
     @functools.cached_property
     def screenshots_dir(self):
         return self.data_dir / 'screenshots'
+
+    @functools.cached_property
+    def resources_dir(self):
+        return self.data_dir / 'resources'
 
     @classmethod
     def from_toml(cls, path: pathlib.Path, overrides=None):

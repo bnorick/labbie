@@ -67,6 +67,12 @@ class BaseWindow(windows.ModernWindow):
         self.raise_()
         self.activateWindow()
 
+    def toggle(self):
+        if not self.isVisible():
+            self.show()
+        else:
+            self.hide()
+
     @staticmethod
     def _connect_signal_to_slot(signal, slot):
         if inspect.iscoroutinefunction(slot):
@@ -80,7 +86,15 @@ class BaseWidget(QtWidgets.QWidget):
     def center_on_screen(self, adjust_size=True):
         if adjust_size:
             self.adjustSize()
-        self.move(QtWidgets.QApplication.instance().desktop().screen().rect().center() - self.rect().center())
+
+        # find the topmost window and move it
+        last = self
+        parent = self.parent()
+        while parent:
+            last = parent
+            parent = parent.parent()
+
+        last.move(QtWidgets.QApplication.instance().desktop().screen().rect().center() - last.rect().center())
 
     @staticmethod
     def _connect_signal_to_slot(signal, slot):
