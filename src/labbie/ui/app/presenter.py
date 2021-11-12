@@ -97,10 +97,10 @@ class AppPresenter:
 
         if results:
             key = keys.SearchWindowKey(results, clear=self._config.ocr.clear_previous)
+            self.show(key)
         else:
             key = keys.SearchWindowKey()
-        self.show(key)
-
+            self.toggle(key)
 
     def show(self, key: 'keys._Key'):
         if not isinstance(key, keys._Key):
@@ -116,6 +116,16 @@ class AppPresenter:
             if key.DELETE_WHEN_CLOSED:
                 presenter.add_close_callback(lambda: self.delete(key))
             key.show(presenter)
+
+    def toggle(self, key: 'keys._Key'):
+        if not isinstance(key, keys._Key):
+            raise ValueError(f'{self.__class__.__name__} can only show keys which are instances '
+                             f'of WindowKey.')
+        if presenter := self.presenters.get(key):
+            logger.debug(f'Reusing presenter for {key=}')
+            key.toggle(presenter)
+        else:
+            self.show(key)
 
     def delete(self, key):
         logger.debug(f'deleting {key=}')

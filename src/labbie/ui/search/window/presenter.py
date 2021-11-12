@@ -22,6 +22,9 @@ class SearchWindowPresenter:
     def show(self):
         self._view.show()
 
+    def toggle(self):
+        self._view.toggle()
+
     def close(self):
         self._widget_presenter.cleanup()
         self._view.hide()

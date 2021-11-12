@@ -67,6 +67,12 @@ class BaseWindow(windows.ModernWindow):
         self.raise_()
         self.activateWindow()
 
+    def toggle(self):
+        if not self.isVisible():
+            self.show()
+        else:
+            self.hide()
+
     @staticmethod
     def _connect_signal_to_slot(signal, slot):
         if inspect.iscoroutinefunction(slot):
