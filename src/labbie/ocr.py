@@ -68,7 +68,7 @@ def parse_image(image, save_path, dilate):
     if save_path:
         Image.fromarray(im_bw).save(save_path / 'full_processed.png')
     enchants = pytesseract.image_to_string(im_bw, config='--psm 12').replace('\x0c', '').replace('’', "'")
-    enchants = [e.strip() for e in enchants.split('\n') if e]
+    enchants = [e.strip().rstrip('.') for e in enchants.split('\n') if e]
     return _fix_krangled_ocr(enchants)
 
 
