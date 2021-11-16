@@ -6,6 +6,7 @@ import loguru
 from labbie import config
 from labbie import constants
 from labbie import state
+from labbie.ui import keys
 from labbie.ui.app import presenter as app
 from labbie.ui.settings.widget import view
 from labbie.ui.screen_selection.widget import view as screen_selection
@@ -81,6 +82,25 @@ class SettingsPresenter:
         self._view.bottom = str(bottom + 1)
 
     async def on_save(self, checked):
+        try:
+            left = int(self._view.left)
+            top = int(self._view.top)
+            right = int(self._view.right)
+            bottom = int(self._view.bottom)
+
+            if right <= left:
+                raise ValueError('Left must be less than right')
+
+            if bottom <= top:
+                raise ValueError('Top must be less than bottom')
+        except ValueError as e:
+            err = str(e)
+            if err.startswith('invalid literal'):
+                e = ValueError('Bounds values (left, top, right, bottom) must be integers')
+
+            self._app_presenter.show(keys.ErrorWindowKey(e))
+            return
+
         if self._view.league != self._config.league:
             self._config.league = self._view.league
             if self._config.league:
