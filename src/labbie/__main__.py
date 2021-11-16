@@ -44,9 +44,16 @@ def main():
     log_path = utils.logs_dir() / 'current_run.log'
     if log_path.is_file():
         prev_log_path = log_path.with_name('prev_run.log')
-        if prev_log_path.is_file():
+        # delete prev log if it exists
+        try:
             prev_log_path.unlink()
-        log_path.rename(prev_log_path)
+        except FileNotFoundError:
+            pass
+        # move log from last run to prev log
+        try:
+            log_path.rename(prev_log_path)
+        except FileExistsError:
+            pass
     log_filter = utils.LogFilter('INFO')
     logger.add(log_path, filter=log_filter, rotation="100 MB", retention=1, mode='w', encoding='utf8')
 

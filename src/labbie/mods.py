@@ -1,6 +1,4 @@
-import collections
 import dataclasses
-from logging import log
 import string
 import functools
 from typing import Dict, List, Optional, Tuple, Union
@@ -46,19 +44,17 @@ class Mods:
 
     def _build_helm_mod_info(
         self,
-        mods: List[List[Tuple[str, List[str], List[Union[int, str]]]]]
+        mods: List[List[Tuple[str, List[str], List[Union[float, int, str]], bool]]]
     ) -> Dict[str, HelmModInfo]:
         result = {}
         for index, mod_variants in enumerate(mods):
             trade_text = None
-            matched_index = None
 
-            for variant_index, (mod_format, slot_patterns, _) in enumerate(mod_variants):
+            for mod_format, slot_patterns, _, _ in mod_variants:
                 if '{' not in mod_format:
                     candidate = mod_format.lower()
                     if candidate in self._trade.text_to_stat_id:
                         trade_text = candidate
-                        matched_index = variant_index
                         break
 
                 slotted = mod_format.format(*slot_patterns).lower()
@@ -66,11 +62,9 @@ class Mods:
                 hash_only_slotted = mod_format.format(*hash_only_slot_patterns).lower()
                 if slotted in self._trade.text_to_stat_id:
                     trade_text = slotted
-                    matched_index = variant_index
                     break
                 elif hash_only_slotted in self._trade.text_to_stat_id:
                     trade_text = hash_only_slotted
-                    matched_index = variant_index
                     break
                 else:
                     continue
@@ -78,10 +72,10 @@ class Mods:
                 logger.warning(f'No trade text found for {index=} {mod_variants=}')
 
             trade_stat_id = self._trade.text_to_stat_id.get(trade_text)
-            for variant_index, (mod_format, slot_patterns, values) in enumerate(mod_variants):
+            for mod_format, slot_patterns, values, display in mod_variants:
                 if '{' not in mod_format:
                     result[mod_format] = HelmModInfo(
-                        display=(variant_index == matched_index),
+                        display=display,
                         mod=mod_format,
                         trade_text=trade_text,
                         trade_stat_id=trade_stat_id,
@@ -104,14 +98,12 @@ class Mods:
                                for pattern, value in zip(slot_patterns, values)]
                 mod = mod_format.format(*slot_values)
                 result[mod] = HelmModInfo(
-                    display=(variant_index == matched_index),
+                    display=display,
                     mod=mod,
                     trade_text=trade_text,
                     trade_stat_id=trade_stat_id,
                     trade_stat_value=trade_stat_value
                 )
-
-        self._fix_krangled_helm_mods(result)
 
         return result
 
@@ -161,9 +153,3 @@ class Mods:
                 enchants.append(keys[0])
 
         return enchants
-
-    def _fix_krangled_helm_mods(self, helm_mod_info: Dict[str, HelmModInfo]):
-        helm_mod_info['Fireball Always Ignites'].display = False
-        helm_mod_info['Fireball has +30% chance to Ignite'].display = True
-        helm_mod_info['Burning Arrow Always Ignites'].display = False
-        helm_mod_info['Burning Arrow has +30% chance to Ignite'].display = True
