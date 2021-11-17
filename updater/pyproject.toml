@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "updater"
+version = "0.1.0"
+description = "Auto Updater for cx_freeze application"
+authors = ["Brandon Norick <b.norick@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "~3.8"
+tuf = "^0.19.0"
+requests = "^2.26.0"
+cryptography = "^35.0.0"
+loguru = "^0.5.3"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+cx-Freeze = "^6.8.2"
+labbie = { path = "../labbie", develop = true }
+flake8 = "^4.0.1"
+
+[tool.poetry.scripts]
+build = "package:package"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
