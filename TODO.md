@@ -12,6 +12,26 @@
   - This change requires putting the actual enchant strings in the trie as values
 
 # Major features
+## Auto Updater
+```
+bin
+  tesseract
+  labbie
+    Labbie.exe
+  updater
+    repository
+      metadata
+    Update.exe
+config
+data
+  updates
+  resources
+logs
+  screenshots
+```
+
+- Updater should be able to download an apply a patch to itself using a new directory followed by a pair of rename operations
+
 ## Buy list
 - Right click base from enchant window and "Add to buy list"
 - Open buy list from labbie main window (pops to the right)

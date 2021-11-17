@@ -63,6 +63,14 @@ tests = ["coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)"
 tests_no_zope = ["coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "six", "mypy", "pytest-mypy-plugins"]
 
 [[package]]
+name = "bsdiff4"
+version = "1.2.1"
+description = "binary diff and patch using the BSDIFF4-format"
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "certifi"
 version = "2021.10.8"
 description = "Python package for providing Mozilla's CA Bundle."
@@ -2437,7 +2445,7 @@ testing = ["pytest (>=4.6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytes
 [metadata]
 lock-version = "1.1"
 python-versions = "~3.8"
-content-hash = "a9a914d6bb6d84a4748ef88e1350230cec62f59c0e84dff1baf1a201fb35ea2e"
+content-hash = "41796d5e4544e3bf7db1c3b38ca471ddd7c86e9eba718b21eb0c476b91cb435c"
 
 [metadata.files]
 aiohttp = [
@@ -2529,6 +2537,9 @@ atomicwrites = [
 attrs = [
     {file = "attrs-21.2.0-py2.py3-none-any.whl", hash = "sha256:149e90d6d8ac20db7a955ad60cf0e6881a3f20d37096140088356da6c716b0b1"},
     {file = "attrs-21.2.0.tar.gz", hash = "sha256:ef6aaac3ca6cd92904cdd0d83f629a15f18053ec84e6432106f7a4d04ae4f5fb"},
+]
+bsdiff4 = [
+    {file = "bsdiff4-1.2.1.tar.gz", hash = "sha256:87cffc7522effdda03fd1564b212ad2279c0af50d16c3e65776f80acb6705d4b"},
 ]
 certifi = [
     {file = "certifi-2021.10.8-py2.py3-none-any.whl", hash = "sha256:d62a0163eb4c2344ac042ab2bdf75399a71a2d8c7d47eac2e2ee91b9d6339569"},

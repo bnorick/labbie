@@ -1,8 +1,11 @@
 import pathlib
 import subprocess
 import sys
+from typing import Union
 
 import loguru
+
+from updater import paths
 
 logger = loguru.logger
 
@@ -18,11 +21,12 @@ def root_dir():
         return pathlib.Path(__file__).parent.parent.parent.parent
 
 
-def repository_path():
-    if getattr(sys, 'frozen', False):
-        return root_dir() / 'bin' / 'updater' / 'repo'
-    else:
-        return root_dir() / 'updater' / 'repo'
+def get_paths(data_dir: pathlib.Path = None):
+    return paths.Paths(root=root_dir(), data=data_dir)
+
+
+def resolve_path(path: Union[str, pathlib.Path]):
+    return pathlib.Path(path).resolve()
 
 
 def get_labbie_version():
