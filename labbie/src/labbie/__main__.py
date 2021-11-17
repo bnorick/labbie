@@ -28,17 +28,22 @@ _Constants = constants.Constants
 
 def parse_args():
     parser = argparse.ArgumentParser('Labbie')
+    parser.add_argument('--version', action='store_true', help='Print version')
     parser.add_argument('--debug', action='store_true', help='Enable debug mode')
     return parser.parse_args()
 
 
 def main():
+    args = parse_args()
+    if args.version:
+        from labbie import version
+        print(version.__version__, end='')
+        exit()
+    elif args.debug:
+        os.environ['LABBIE_DEBUG'] = '1'
+
     utils.logs_dir().mkdir(exist_ok=True, parents=True)
     utils.exit_if_already_running()
-
-    args = parse_args()
-    if args.debug:
-        os.environ['LABBIE_DEBUG'] = '1'
 
     logger.remove()
     log_path = utils.logs_dir() / 'current_run.log'
