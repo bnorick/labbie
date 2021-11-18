@@ -11,11 +11,12 @@ requests = "^2.26.0"
 cryptography = "^35.0.0"
 loguru = "^0.5.3"
 bsdiff4 = "^1.2.1"
+PySide2 = "^5.15.2"
+qasync = "^0.22.0"
+QtPy = "^1.11.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
-cx-Freeze = "^6.8.2"
-labbie = { path = "../labbie", develop = true }
 flake8 = "^4.0.1"
 
 [tool.poetry.scripts]

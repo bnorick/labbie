@@ -44,8 +44,7 @@ def lazy_import(func):
         namespace = None
     else:
         namespace = f.f_locals
-    print(dir(func))
-    return _LazyImport(func.__name__,func,namespace)
+    return _LazyImport(func.__name__, func, namespace)
 
 
 class _LazyImport(object):

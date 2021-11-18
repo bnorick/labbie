@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import dataclasses
 import functools
 import gzip
@@ -13,10 +14,19 @@ import orjson
 from labbie import constants
 from labbie import errors
 from labbie import state
-from labbie import utils
 
 _Constants = constants.Constants
 _LOADERS = {}
+
+
+@contextlib.asynccontextmanager
+async def client_session(session: Optional[aiohttp.ClientSession] = None) -> aiohttp.ClientSession:
+    if session:
+        yield session
+    else:
+        import aiohttp
+        async with aiohttp.ClientSession() as session:
+            yield session
 
 
 def loader(type_):
@@ -78,7 +88,7 @@ class Resource:
 
     async def needs_update(self, resources_dir: pathlib.Path,
                            session: Optional[aiohttp.ClientSession] = None):
-        async with utils.client_session(session) as session:
+        async with client_session(session) as session:
             async with session.head(self.url) as resp:
                 if resp.status == 404:
                     return True
@@ -102,7 +112,7 @@ class Resource:
                                session: Optional[aiohttp.ClientSession] = None):
         needs_update = await self.needs_update(resources_dir, session=session)
         if force or needs_update:
-            async with utils.client_session(session) as session:
+            async with client_session(session) as session:
                 async with session.get(self.url) as resp:
                     if resp.status != 200:
                         raise errors.FailedToDownloadResource(self.url)

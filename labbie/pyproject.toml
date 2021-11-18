@@ -30,7 +30,7 @@ poetry2setup = "^1.0.0"
 
 [tool.poetry.scripts]
 labbie = "labbie.__main__:main"
-package = "package:package"
+build = "package:package"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

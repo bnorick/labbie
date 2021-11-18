@@ -1,1 +1,3 @@
-__version__ = '0.1.0'
+from updater import utils
+
+utils.update_path()

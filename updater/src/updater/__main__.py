@@ -1,12 +1,18 @@
 import argparse
+import asyncio
+import atexit
 import dataclasses
 import functools
 import pathlib
 import shutil
+import sys
 import tempfile
-from typing import List, Optional
+from typing import Callable, List, Optional
 
 import loguru
+from qtpy import QtGui
+from qtpy import QtWidgets
+import qasync
 import requests
 from tuf import settings
 from tuf import exceptions
@@ -15,6 +21,9 @@ from tuf.client import updater
 from updater import patch
 from updater import paths
 from updater import utils
+from updater import version
+from updater.ui import update_window
+from updater.vendor.qtmodern import styles
 
 logger = loguru.logger
 
@@ -51,17 +60,37 @@ class Component:
     replace_after_exit: bool = False
 
     def __post_init__(self, version_name: str):
+        self._version_name = version_name
+
+    def load(self):
+        version_name = self._version_name
+
+        try:
+            self._version_name_to_id = {version.name: version.id for version in self.versions}
+        except Error as e:
+            logger.error(str(e))
+            raise
+
         if self.version is None:
             if version_name is None:
                 raise ValueError('Invalid arguments, either version must be set to a Version or '
                                  'version_name must be specified.')
-            self.version = Version(name=version_name, id=self.versions.index(version_name))
+            self.version = Version(name=version_name, id=self._version_name_to_id[version_name])
 
+        # clip versions to end at the last "latest"
+        try:
+            last_id = max(self._version_name_to_id[v] for v in self.version_history['latest'].values())
+        except ValueError:
+            raise ValueError(f'Invalid version_history at {self.version_history_url}, no latest versions.')
+        self.versions = self.versions[:last_id + 1]
         self._version_name_to_id = {version.name: version.id for version in self.versions}
 
     @functools.cached_property
     def version_history(self):
         resp = requests.get(self.version_history_url)
+        if resp.status_code != 200:
+            raise Error(f'Unable to download version history for component {self.name} from '
+                        f'{self.version_history_url}.')
         return resp.json()
 
     @functools.cached_property
@@ -75,7 +104,7 @@ class Component:
         latest = self.version_history['latest'].get(type_)
         if latest is None:
             return None
-        return self._version_name_to_id[latest]
+        return self.versions[self._version_name_to_id[latest]]
 
     def previous_release(self, version_from: Version):
         for index in range(version_from.id - 1, 0, -1):
@@ -94,19 +123,20 @@ class Component:
     def next_sequential_prerelease(self, version_from: Version):
         if version_from == self.versions[-1]:
             raise NoSuchRelease
-        version = self.versions[version_from.index + 1]
+        version = self.versions[version_from.id + 1]
         if version.is_prerelease():
             return version
         raise NoSuchRelease
 
 
-def prerelease_reversion_target(prerelease: Version):
-    # e.g., v0_8_0-rc_3.reversion.patch
-    return f'v{prerelease.name.replace(".", "_")}.reversion.patch'
+def prerelease_reversion_target(component: Component, prerelease: Version):
+    # e.g., labbie/v0_8_0-rc_3.patch.rollback
+    return target(component, prerelease) + '.rollback'
 
 
-def target(version: Version):
-    return f'v{version.name.replace(".", "_")}.patch'
+def target(component: Component, version: Version):
+    # e.g., labbie/v0_8_0.patch
+    return f'{component.name.lower()}/v{version.name.replace(".", "_")}.patch'
 
 
 def compatible_prerelease_versions(version_from: Version, version_to: Version):
@@ -116,17 +146,32 @@ def compatible_prerelease_versions(version_from: Version, version_to: Version):
     return version_from.core == version_to.core
 
 
+def get_versions(component: Component, release_type: str):
+    current = component.version
+    latest_release = component.latest_version('release')
+    latest_prerelease = component.latest_version('prerelease')
+
+    # when a release exists which is newer than the latest prerelease, we ignore prereleases
+    release_newer = latest_prerelease is None or latest_prerelease.id < latest_release.id
+    if release_type == 'prerelease' and release_newer:
+        release_type = 'release'
+
+    latest = latest_release if release_type == 'release' else latest_prerelease
+    logger.info(f'versions: {current=} {latest_release=} {latest_prerelease=} {latest=}')
+    return current, latest
+
+
 def calculate_target_names(component: Component, version_from: Version, version_to: Version):
     targets = []
     version = version_from
     if compatible_prerelease_versions(version_from, version_to):
         while version != version_to:
             version = component.next_sequential_prerelease(version)
-            targets.append(target(version))
+            targets.append(target(component, version))
         return targets
 
     if version_from.is_prerelease():
-        targets.append(prerelease_reversion_target(version_from))
+        targets.append(prerelease_reversion_target(component, version_from))
         previous_release_version = component.previous_release(version_from)
         if previous_release_version == version_to:
             return targets
@@ -136,14 +181,14 @@ def calculate_target_names(component: Component, version_from: Version, version_
         # it is exhausted.
         while version != version_to:
             version = component.next_release(version)
-            targets.append(target(version))
+            targets.append(target(component, version))
     except NoSuchRelease:
         # We reached the last release without reaching version_to, meaning we must be updating to
         # a prerelease. Follow the chain of prereleases from the last release.
         assert version_to.is_prerelease()
         while version != version_to:
             version = component.next_sequential_prerelease(version)
-            targets.append(target(version))
+            targets.append(target(component, version))
 
     return targets
 
@@ -174,98 +219,243 @@ def cleanup(paths: paths.Paths):
     delete_contents(paths.work)
 
 
-def update(component: Component, paths: paths.Paths, release_type: str):
-    versions = component.versions
+async def update(component: Component, paths: paths.Paths, release_type: str,
+                 callback: Optional[Callable] = None):
+    if callback is None:
+        def callback(message=None, error=None, progress=None):
+            pass
 
-    current = component.version
-    latest_release = component.latest_version('release')
-    latest_prerelease = component.latest_version('prerelease')
+    try:
 
-    if release_type == 'prerelease' and (latest_prerelease is None or latest_prerelease.id < latest_release.id):
-        release_type = 'release'
+        @utils.wrap
+        def start(component):
+            component.load()
 
-    # remove versions beyond the latest latest_x from consideration
-    versions = versions[:max(latest_release_index, latest_prerelease_index) + 1]
+        await start(component)
 
-    logger.info(f'versions: {current=} {latest_release=} {latest_prerelease=}')
+        current, latest = get_versions(component, release_type)
+        callback(message=f'Current version: {current.name}\nLatest {release_type}: {latest.name}')
 
-    # when a release exists which is newer than the latest prerelease, we ignore prereleases
-    if release_type == 'prerelease' and latest_prerelease_index < latest_release_index:
-        release_type = 'release'
+        if current == latest:
+            callback(message='Already up to date.', progress=100)
+        else:
+            progress = 0
+            callback(message='Preparing to download and apply updates...', progress=progress)
+            await utils.wrap(cleanup)(paths)
+            progress += 5
 
-    latest = latest_release if release_type == 'release' else latest_prerelease
+            repo_dir = paths.repo
+            settings.repositories_directory = str(repo_dir.parent)
+            logger.info(f'Loading repository from local={repo_dir} remote={component.repository_url}')
 
-    if current != latest:
-        repository_mirrors = {'mirror1': {'url_prefix': 'http://localhost:8001',
-                                            'metadata_path': 'metadata',
-                                            'targets_path': 'targets'}}
+            repository_mirrors = {
+                'mirror1': {
+                    'url_prefix': component.repository_url,
+                    'metadata_path': 'metadata',
+                    'targets_path': 'targets'
+                }
+            }
 
-        repo_dir = paths.updater_repo
-        settings.repositories_directory = str(repo_dir.parent)
-        logger.info(f'Loading repository from {repo_dir}')
+            updater_ = updater.Updater(repo_dir.name, repository_mirrors)
+            callback(message='Refreshing patch information...', progress=progress)
+            updater_.refresh()
+            progress += 2
 
-        updater_ = updater.Updater(repo_dir.name, repository_mirrors)
-        updater_.refresh()
+            destination_directory = str(paths.downloads)
 
-        destination_directory = str(paths.downloads)
+            callback(message='Calculating which patches to apply...', progress=progress)
+            target_names = calculate_target_names(component, current, latest)
+            progress += 3
+            logger.info(f'Downloading and applying updates from {current=} to {latest=} with the '
+                        f'path: {target_names}')
 
-        target_names = calculate_target_names(versions, current, latest)
-        logger.info(f'Downloading updates from {current=} to {latest=} with the path: {target_names}')
+            total = len(target_names)
+            remainder = 100 - progress - 5 - 10
+            per_action = remainder // (total * 2)  # * 2 for download and apply
+            extra = remainder - per_action * total * 2
 
-        try:
-            targets = [updater_.get_one_valid_targetinfo(t) for t in target_names]
-            updated_targets = updater_.updated_targets(targets, destination_directory)
+            @utils.wrap
+            def copy(component, temp_dir):
+                shutil.copytree(component.path, temp_dir, dirs_exist_ok=True)
 
-            temp_dir = tempfile.mkdtemp(dir=paths.work)
-            shutil.copytree()
+            @utils.wrap
+            def download(updater, target, destination):
+                updater.download_target(target, destination)
 
-            for target in updated_targets:
-                updater_.download_target(target, destination_directory)
+            @utils.wrap
+            def apply(source, patch_path: pathlib.Path):
+                with patch_path.open('rb') as f:
+                    patch.apply_patch(source, f)
 
-        except exceptions.UnknownTargetError as e:
-            logger.error(f'Update failed, {e}')
-            return
+            @utils.wrap
+            def replace(current_path: pathlib.Path, old_path: pathlib.Path, new_path: str):
+                if old_path.exists():
+                    shutil.rmtree(str(current_path))
+                else:
+                    shutil.move(str(current_path), str(old_path))
+                shutil.move(new_path, str(current_path))
 
+            try:
+                targets = [updater_.get_one_valid_targetinfo(t) for t in target_names]
+                updated_targets = updater_.updated_targets(targets, destination_directory)
 
-def update_self():
-    # unpack to bin/updater-vX_Y_Z
-    update_path = utils.root_dir() / 'bin' / 'updater-vX_Y_Z'
-    current_path = utils.root_dir() / 'bin' / 'updater'
-    utils.rename_later(path_from=current_path, path_to=current_path.with_name(f'{current_path.name}-old'), delay=1)
-    utils.rename_later(path_from=update_path, path_to=current_path, delay=2)
-    exit()
+                paths.work.mkdir(parents=True, exist_ok=True)
+                temp_dir = tempfile.mkdtemp(dir=paths.work)
+                callback(message='Copying source files...', progress=progress)
+                await copy(component, temp_dir)
+                progress += 10
+
+                for index, target in enumerate(updated_targets, start=1):
+                    message = f'Downloading {target["filepath"]} ({index} / {total})...'
+                    callback(message=message, progress=progress)
+                    logger.info(message)
+                    await download(updater_, target, destination_directory)
+                    # updater_.download_target(target, destination_directory)
+                    progress += per_action
+
+                    message = f'Applying {target["filepath"]}...'
+                    logger.info(message)
+                    callback(message=message, progress=progress)
+                    try:
+                        await apply(temp_dir, paths.downloads / target['filepath'])
+                    except patch.PatchError as e:
+                        message = f'Error while applying patch ({e}).'
+                        logger.exception(message)
+                        raise Error(message)
+                    progress += per_action
+
+                current_path = component.path
+                old_version_path = component.path.with_name(
+                    f'{component.name.lower()} {component.version.name}')
+                if not component.replace_after_exit:
+                    message = (f'Replacing {component.name} v{current.name} with {component.name} '
+                               f'v{latest.name}...')
+                    logger.info(message)
+                    callback(message=message, progress=progress)
+                    await replace(current_path, old_version_path, temp_dir)
+                else:
+                    message = (f'Registering action to replace {component.name} v{current.name} with '
+                               f'{component.name} v{latest.name}...')
+                    logger.info(message)
+                    callback(message=message, progress=progress)
+
+                    def rename():
+                        utils.rename_later(path_from=current_path, path_to=old_version_path, delay=1)
+                        utils.rename_later(path_from=temp_dir, path_to=current_path, delay=2)
+                    atexit.register(rename)
+                progress += 5 + extra
+                callback(message='Done.', progress=progress)
+
+            except exceptions.UnknownTargetError as e:
+                logger.error(f'Update failed, {e}')
+                callback(message=f'Update failed, error:\n{e}', error=True)
+            except Error as e:
+                logger.error(f'Update failed, {e}')
+                callback(message=f'Update failed, error:\n{e}', error=True)
+    except asyncio.CancelledError:
+        callback(message='Update cancelled.', error=True)
+        raise
 
 
 def parse_args():
     parser = argparse.ArgumentParser()
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--update', dest='action', action='store_const', const='update')
+    group.add_argument('--check', dest='action', action='store_const', const='check')
+    parser.add_argument('--component', default='labbie')
     parser.add_argument('--prerelease', action='store_true')
     parser.add_argument('--data-dir', type=utils.resolve_path, default=None)
-    return parser.parse_args()
+    parser.add_argument('--current-version', default=None)
+    args = parser.parse_args()
+    if args.action is None:
+        args.action = 'update'
+    return args
 
 
 def main():
-    logger.add(utils.root_dir() / 'logs' / 'updater.log', mode='w', encoding='utf8')
-
     args = parse_args()
-    paths = utils.get_paths(data_dir=args.data_dir)
+    if args.action == 'check':
+        logger.remove()
+    else:
+        logger.add(utils.root_dir() / 'logs' / 'updater.log', mode='w', encoding='utf8')
 
-    cleanup(paths)
+    from labbie import constants
+    constants_ = constants.Constants.load()
 
-    type_ = 'prerelease' if args.prerelease else 'release'
-    update(type_, paths)
+    paths = utils.get_paths(data_dir=constants_.data_dir)
+
+    components = {
+        'labbie': Component(
+            'Labbie',
+            path=paths.root / 'bin' / 'labbie',
+            version_history_url='https://labbie.blob.core.windows.net/releases/labbie_version_history.json',
+            repository_url='http://localhost:8001/',
+            # repository_url='https://labbie.blob.core.windows.net/releases',
+            version_name=args.current_version or utils.get_labbie_version()
+        ),
+        'updater': Component(
+            'Updater',
+            path=paths.root / 'bin' / 'updater',
+            version_history_url='https://labbie.blob.core.windows.net/releases/updater_version_history.json',
+            repository_url='http://localhost:8001/',
+            # repository_url='https://labbie.blob.core.windows.net/releases',
+            version_name=version.__version__
+        )
+    }
+
+    component = components[args.component]
+    release_type = 'prerelease' if args.prerelease else 'release'
+
+    if args.action == 'check':
+        component.load()
+        current, latest = get_versions(component, release_type)
+        if current != latest:
+            print(latest.name, end='')
+        sys.exit()
+
+    app = QtWidgets.QApplication(sys.argv)
+    styles.dark(app)
+
+    utils.fix_taskbar_icon()
+    icon_path = utils.assets_dir() / 'icon5.ico'
+    app.setWindowIcon(QtGui.QIcon(str(icon_path)))
+
+    window = update_window.UpdateWindow()
+    window.show()
+
+    def callback(message=None, last=None, error=False, progress=None):
+        if last is None:
+            last = (progress == 100)
+
+        if message is not None:
+            window.add_message(message, last=last, error=error)
+
+        if progress is not None:
+            window.set_progress(progress)
+
+    # window.add_message('Foo')
+    # window.add_message('Bar')
+    # window.set_progress(40)
+    # # window.add_message('This is a bad error.', error=True)
+    # window.set_progress(100)
+
+    loop = qasync.QSelectorEventLoop(app)
+    asyncio.set_event_loop(loop)
+
+    with loop:
+        # loop.run_until_complete(start(log_filter))
+        # loop.set_debug(True)
+        import logging
+        logging.getLogger("asyncio").setLevel(logging.ERROR)
+        if args.action == 'update':
+            update_task = loop.create_task(update(component, paths, release_type, callback))
+            window.set_task(update_task)
+            try:
+                loop.run_until_complete(update_task)
+            except asyncio.CancelledError:
+                pass
+            sys.exit(loop.run_forever())
 
 
 if __name__ == '__main__':
     main()
-
-# NG client
-# updater_ = updater.Updater(
-#     repository_dir=utils.root_dir() / 'updater' / 'metadata' / 'current',
-#     metadata_base_url='http://localhost:8001/',
-#     target_base_url='http://localhost:8000/targets/',
-# )
-
-# updater_.refresh()
-
-# targetinfo = updater.get_one_valid_targetinfo('v0_6_1.patch')
-# updater.updated_targets(targetinfo, utils.root_dir() / 'updater' / 'downloads')

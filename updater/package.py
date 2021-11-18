@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import pathlib
+
 import cx_Freeze
 import setuptools
 
@@ -14,14 +16,24 @@ install_requires = [
 
 build_exe_options = {
     'packages': packages,
-    'include_files': ['repo'],
-    'excludes': ['tkinter', 'test'],
+    'include_files': ['repo', 'assets', 'LICENSE'],
+    'excludes': ['tkinter', 'test', 'labbie', 'PyQt5', 'PySide2'],
     # 'includes': ['cryptography', 'tuf', 'requests', 'pathlib', 'subprocess', 'sys', 'loguru', 'argparse', 'json'],
     'optimize': 2
 }
 
 executables = [
-    cx_Freeze.Executable('entry_point.py', base='Win32GUI', target_name='Updater.exe')  # , icon='assets/icon.ico'
+    cx_Freeze.Executable(
+        'entry_point.py',
+        base='Win32GUI',
+        icon='assets/icon.ico',
+        target_name='Updater.exe'
+    ),
+    cx_Freeze.Executable(
+        'entry_point.py',
+        base=None,
+        target_name='Updater.com'
+    )
 ]
 
 setup_kwargs = {
@@ -51,6 +63,9 @@ def package():
     if len(sys.argv) == 1:
         sys.argv.append('build')
     cx_Freeze.setup(**setup_kwargs)
+    build_dir = pathlib.Path(__file__).parent / 'build'
+    for path in build_dir.rglob('Updater.com.exe'):
+        path.rename(path.with_suffix(''))
 
 
 if __name__ == '__main__':
