@@ -19,9 +19,6 @@ QtPy = "^1.11.2"
 pytest = "^5.2"
 flake8 = "^4.0.1"
 
-[tool.poetry.scripts]
-build = "package:package"
-
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"

@@ -1,4 +1,4 @@
-__version__ = '0.7.0-alpha.1'
+__version__ = '0.6.1'
 
 from typing import Tuple
 
@@ -29,6 +29,7 @@ if _prerelease:
         raise ValueError(f'Invalid prerelease version, invalid type: {_prerelease}')
 else:
     VERSION_NUMBER.append(_PRERELEASE_TYPE_VALUE[None])
+    VERSION_NUMBER.append(0)
 
 VERSION_NUMBER = tuple(VERSION_NUMBER)
 

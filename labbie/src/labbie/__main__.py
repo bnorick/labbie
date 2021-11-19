@@ -85,16 +85,15 @@ def main():
 async def handle_ipc(app_presenter):
     # Focuses the app when other instances start
     # Exits the app when other instances signal to exit
-    mm = ipc.instances_shm()
 
     while True:
-        if ipc.should_exit(mm):
+        if ipc.should_exit():
             app_presenter.shutdown()
             return
 
-        if ipc.should_foreground(mm):
+        if ipc.should_foreground():
             app_presenter.foreground()
-            ipc.foregrounded(mm)
+            ipc.foregrounded()
         await asyncio.sleep(0.1)
 
 

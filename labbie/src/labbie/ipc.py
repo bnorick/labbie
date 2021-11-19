@@ -9,7 +9,8 @@ from labbie import version
 logger = loguru.logger
 
 _SHARED_LIST = None
-_DEFAULT_ENTRIES = [1] + list(version.VERSION_NUMBER) + [False]
+_DEFAULT_ENTRIES = [0] + list(version.VERSION_NUMBER) + [False]
+_CREATED_SHM = False
 # 7 values:
 #    0 -> (int) instance count
 #    1 -> (int) major version of running instance
@@ -31,14 +32,16 @@ _EXIT_SIGNAL_INDEX = 6
 
 
 def get_shm():
-    global _SHARED_LIST
+    global _SHARED_LIST, _CREATED_SHM
 
     if _SHARED_LIST is not None:
         return _SHARED_LIST
 
     logger.info('Initializing IPC shared memory')
     try:
-        _SHARED_LIST = shared_memory.ShareableList(_DEFAULT_ENTRIES)
+        logger.info('Creating IPC shared memory')
+        _CREATED_SHM = True
+        _SHARED_LIST = shared_memory.ShareableList(_DEFAULT_ENTRIES, name='labbie_ipc')
     except FileExistsError:
         _SHARED_LIST = shared_memory.ShareableList(name='labbie_ipc')
 
@@ -64,6 +67,13 @@ def initialize(force=False):
             logger.info(f'Labbie v{version.from_tuple(running_version)} is already running.')
             logger.info('Exiting')
             sys.exit()
+    else:
+        mark_running()
+
+
+def mark_running():
+    shm = get_shm()
+    shm[_INSTANCES_INDEX] += 1
 
 
 def is_running():
@@ -73,7 +83,10 @@ def is_running():
 
 def get_running_version():
     shm = get_shm()
-    return tuple(shm[_VERSION_START_INDEX:_VERSION_END_INDEX + 1])
+    version = []
+    for index in range(_VERSION_START_INDEX, _VERSION_END_INDEX + 1):
+        version.append(shm[index])
+    return tuple(version)
 
 
 def signal_exit():
