@@ -16,3 +16,11 @@ def updater_dir():
 
 def build_dir():
     return root_dir() / 'package' / 'build'
+
+
+def labbie_build_dir():
+    return build_dir() / 'components' / 'labbie'
+
+
+def updater_build_dir():
+    return build_dir() / 'components' / 'updater'

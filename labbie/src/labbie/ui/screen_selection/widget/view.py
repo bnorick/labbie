@@ -1,9 +1,9 @@
 import inspect
 
 import injector
-from PyQt5 import QtCore
-from PyQt5 import QtGui
-from PyQt5 import QtWidgets
+from qtpy import QtCore
+from qtpy import QtGui
+from qtpy import QtWidgets
 import qasync
 
 Qt = QtCore.Qt
@@ -18,7 +18,7 @@ QSizeGrip {
 
 class ScreenSelectionWidget(QtWidgets.QWidget):
 
-    rightClicked = QtCore.pyqtSignal()
+    rightClicked = QtCore.Signal()
 
     @injector.inject
     def __init__(self, left, top, right, bottom, **kwargs):

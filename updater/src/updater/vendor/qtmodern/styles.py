@@ -11,7 +11,6 @@ def _apply_base_theme(app):
         Args:
             app (QApplication): QApplication instance.
     """
-    print(QT_VERSION)
     if QT_VERSION < (5,):
         app.setStyle('plastique')
     else:

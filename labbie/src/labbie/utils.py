@@ -1,6 +1,5 @@
 import atexit
 import dataclasses
-import mmap
 import os
 import pathlib
 import sys
@@ -76,18 +75,6 @@ def relaunch(debug, exit_fn=None):
         exit_fn()
     else:
         sys.exit(0)
-
-
-def instances_shm():
-    return mmap.mmap(-1, 1, 'labbie_instances')
-
-
-def exit_if_already_running():
-    mm = instances_shm()
-    if mm[0] > 0:
-        mm[0] += 1
-        logger.info(f'Labbie is already running, instances={mm[0]}')
-        sys.exit()
 
 
 def make_slotted_dataclass(cls):

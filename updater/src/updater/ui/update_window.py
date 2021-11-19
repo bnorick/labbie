@@ -2,6 +2,7 @@ from qtpy import QtCore
 from qtpy import QtGui
 from qtpy import QtWidgets
 
+from updater import utils
 from updater.vendor.qtmodern import windows
 
 Qt = QtCore.Qt
@@ -59,6 +60,29 @@ class UpdateWindow(windows.ModernWindow):
         self.task = None
         self.messages = 0
 
+        self.center_on_screen()
+
+    def ask_to_close(self, component, future):
+        msgbox_close = windows.ModernMessageBox()
+        msgbox_close.setWindowTitle('Action Required')
+        msgbox_close.setIconPixmap(
+            QtGui.QIcon(str(utils.assets_dir() / 'close.svg')).pixmap(QtCore.QSize(35, 35)))
+        msgbox_close.setStandardButtons(QtWidgets.QMessageBox.NoButton)
+        msgbox_btn_close = msgbox_close.addButton('Close', QtWidgets.QMessageBox.DestructiveRole)
+        msgbox_btn_cancel = msgbox_close.addButton('Cancel Update', QtWidgets.QMessageBox.RejectRole)
+        msgbox_close.setEscapeButton(msgbox_btn_cancel)
+        msgbox_close.setText(f'{component.name} is currently running and must be closed to continue.')
+
+        msgbox_close.show()
+        msgbox_close.exec_()
+        msgbox_close.hide()
+
+        if msgbox_close.clickedButton() is msgbox_btn_close:
+            component.close_and_continue(future)
+        else:
+            self.task.cancel()
+            self.on_done(error=True)
+
     def set_status_visibility(self, visible):
         self.lbl_status.setVisible(visible)
         self.edit_status.setVisible(visible)
@@ -84,7 +108,6 @@ class UpdateWindow(windows.ModernWindow):
         if self.done:
             self.close()
         if self.task:
-            print(self.task)
             self.task.cancel()
         self.on_done(error=True)
 
@@ -108,6 +131,20 @@ class UpdateWindow(windows.ModernWindow):
             self.on_done(error=error)
         if last:
             self.set_status_visibility(visible=True)
+
+    def center_on_screen(self, adjust_size=True):
+        if adjust_size:
+            self.adjustSize()
+
+        # find the topmost window and move it
+        last = self
+        parent = self.parent()
+        while parent:
+            last = parent
+            parent = parent.parent()
+
+        desktop = QtWidgets.QApplication.instance().desktop()
+        last.move(desktop.screen().rect().center() - last.rect().center())
 
     def set_buttons(self, minimize=None, maximize=None, close=None):
         kwargs = {}

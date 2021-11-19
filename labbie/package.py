@@ -35,7 +35,7 @@ executables = [
         'entry_point.py',
         base='Win32GUI',
         target_name='Labbie.exe',
-        icon='assets/taxi-32.ico'
+        icon='assets/icon.ico'
     ),
     cx_Freeze.Executable(
         'entry_point.py',

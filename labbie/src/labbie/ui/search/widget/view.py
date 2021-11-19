@@ -1,9 +1,9 @@
 import atexit
 from typing import Dict, List, Optional
 
-from PyQt5 import QtCore
-from PyQt5 import QtGui
-from PyQt5 import QtWidgets
+from qtpy import QtCore
+from qtpy import QtGui
+from qtpy import QtWidgets
 
 from labbie.ui import base
 from labbie.ui import checkable_combo
@@ -15,10 +15,10 @@ Qt = QtCore.Qt
 
 class TabBar(QtWidgets.QTabBar):
 
-    middleClicked = QtCore.pyqtSignal(int)
+    middleClicked = QtCore.Signal(int)
 
     def __init__(self):
-        super(QtWidgets.QTabBar, self).__init__()
+        super().__init__()
         self.previousMiddleIndex = -1
 
     def mousePressEvent(self, mouseEvent):

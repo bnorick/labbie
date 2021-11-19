@@ -1,9 +1,9 @@
 import keyboard
-from PyQt5 import QtCore
+from qtpy import QtCore
 
 
 class Hotkey(QtCore.QObject):
-    pressed = QtCore.pyqtSignal()
+    pressed = QtCore.Signal()
 
     def __init__(self, hotkey):
         super().__init__()

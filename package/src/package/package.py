@@ -7,7 +7,7 @@ def package_labbie():
     from package import utils
 
     labbie_dir = utils.labbie_dir()
-    labbie_build_dir = utils.build_dir() / 'labbie'
+    labbie_build_dir = utils.labbie_build_dir()
 
     package_dir = {'': str(labbie_dir / 'src')}
     packages = setuptools.find_packages(str(labbie_dir / 'src'))
@@ -18,7 +18,7 @@ def package_labbie():
             str(labbie_dir / 'entry_point.py'),
             base='Win32GUI',
             target_name='Labbie.exe',
-            icon=str(labbie_dir / 'assets' / 'taxi-32.ico')
+            icon=str(labbie_dir / 'assets' / 'icon.ico')
         ),
         cx_Freeze.Executable(
             str(labbie_dir / 'entry_point.py'),
@@ -45,8 +45,14 @@ def package_labbie():
     }
 
     cx_Freeze.setup(**setup_kwargs)
+
     for path in labbie_build_dir.rglob('Labbie.com.exe'):
         path.rename(path.with_suffix(''))
+
+    for path in labbie_build_dir.rglob('python38.dll'):
+        if path.parent != labbie_build_dir:
+            path.unlink()
+
 
 
 def package_updater():
@@ -54,7 +60,7 @@ def package_updater():
     from package import utils
 
     updater_dir = utils.updater_dir()
-    updater_build_dir = utils.build_dir() / 'updater'
+    updater_build_dir = utils.updater_build_dir()
 
     package_dir = {'': str(updater_dir / 'src')}
     packages = setuptools.find_packages(str(updater_dir / 'src'))
@@ -85,12 +91,22 @@ def package_updater():
         'options': {
             'build_exe': {
                 'build_exe': str(updater_build_dir),
-                'include_files': [str(updater_dir / 'assets'), str(updater_dir / 'LICENSE')]
+                'excludes': ['tkinter', 'test', 'labbie', 'PySide2'],
+                'include_files': [
+                    str(updater_dir / 'repo'),
+                    str(updater_dir / 'assets'),
+                    str(updater_dir / 'LICENSE')
+                ]
             }
         },
         'executables': executables,
     }
 
     cx_Freeze.setup(**setup_kwargs)
+
     for path in updater_build_dir.rglob('Updater.com.exe'):
         path.rename(path.with_suffix(''))
+
+    for path in updater_build_dir.rglob('python38.dll'):
+        if path.parent != updater_build_dir:
+            path.unlink()

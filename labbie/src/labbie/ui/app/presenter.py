@@ -138,5 +138,8 @@ class AppPresenter:
     def foreground(self):
         self.show(keys.SearchWindowKey())
 
+    def shutdown(self):
+        self.presenters[keys.SystemTrayIconKey()].exit()
+
 
 from labbie.ui import keys  # noqa: E402

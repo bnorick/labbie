@@ -1,7 +1,7 @@
 from typing import Tuple, Union
-from PyQt5 import QtCore
-from PyQt5 import QtGui
-from PyQt5 import QtWidgets
+from qtpy import QtCore
+from qtpy import QtGui
+from qtpy import QtWidgets
 
 from labbie.ui import base
 from labbie.ui import switch
@@ -29,6 +29,7 @@ class AboutWidget(base.BaseWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.setWindowTitle('About')
 
         lbl_title = QtWidgets.QLabel('Labbie', self)
         lbl_title.setStyleSheet('QLabel{font-size: 12pt; font-weight: bold;}')

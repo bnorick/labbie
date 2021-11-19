@@ -1,9 +1,9 @@
 import asyncio
 import functools
-import os
 import pathlib
 import subprocess
 import sys
+import tempfile
 from typing import Union
 
 import loguru
@@ -39,6 +39,24 @@ def assets_dir():
     return updater_dir() / 'assets'
 
 
+def built_labbie_dir():
+    if getattr(sys, 'frozen', False):
+        return root_dir() / 'bin' / 'labbie'
+    else:
+        return root_dir() / 'package' / 'build' / 'Labbie' / 'bin' / 'labbie'
+
+
+def built_updater_dir():
+    if getattr(sys, 'frozen', False):
+        return root_dir() / 'bin' / 'updater'
+    else:
+        return root_dir() / 'package' / 'build' / 'Labbie' / 'bin' / 'updater'
+
+
+def assets_dir():
+    return updater_dir() / 'assets'
+
+
 def update_path():
     if getattr(sys, 'frozen', False):
         sys.path.append(str(root_dir() / 'bin' / 'labbie' / 'lib'))
@@ -54,13 +72,28 @@ def resolve_path(path: Union[str, pathlib.Path]):
 
 
 def get_labbie_version():
-    labbie_dir = root_dir() / 'bin' / 'labbie'
+    labbie_dir = built_labbie_dir()
     if not (labbie_dir / 'Labbie.com').exists():
         raise RuntimeError(f'Missing labbie build at {labbie_dir}')
-    env = os.environ.copy()
-    env['QT_API'] = 'pyqt5'
-    version = subprocess.check_output([str(labbie_dir / 'Labbie.com'), '--version'], env=env, shell=True)
-    return version.decode('utf8').strip()
+    startupinfo = subprocess.STARTUPINFO()
+    startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+    startupinfo.wShowWindow = subprocess.SW_HIDE
+    stdout_file = tempfile.NamedTemporaryFile(mode='r+', delete=False)
+    process = subprocess.Popen(
+        [str(labbie_dir / 'Labbie.com'), '--version'],
+        stdin=subprocess.PIPE,
+        stdout=stdout_file,
+        stderr=subprocess.PIPE,
+        shell=False,
+        startupinfo=startupinfo
+    )
+    return_code = process.wait()
+    stdout_file.flush()
+    stdout_file.seek(0)  # This is required to reset position to the start of the file
+    version = stdout_file.read()
+    stdout_file.close()
+
+    return version
 
 
 def rename_later(path_from, path_to, delay):

@@ -7,6 +7,7 @@ import pathlib
 import shutil
 import sys
 import tempfile
+import traceback
 from typing import Callable, List, Optional
 
 import loguru
@@ -18,14 +19,18 @@ from tuf import settings
 from tuf import exceptions
 from tuf.client import updater
 
+from labbie import constants
+from labbie import ipc
 from updater import patch
 from updater import paths
+from updater import signals
 from updater import utils
 from updater import version
 from updater.ui import update_window
 from updater.vendor.qtmodern import styles
 
 logger = loguru.logger
+
 
 
 class Error(Exception):
@@ -61,6 +66,10 @@ class Component:
 
     def __post_init__(self, version_name: str):
         self._version_name = version_name
+
+    def set_running_handlers(self, is_running, close_and_continue):
+        self.is_running = is_running
+        self.close_and_continue = close_and_continue
 
     def load(self):
         version_name = self._version_name
@@ -222,7 +231,7 @@ def cleanup(paths: paths.Paths):
 async def update(component: Component, paths: paths.Paths, release_type: str,
                  callback: Optional[Callable] = None):
     if callback is None:
-        def callback(message=None, error=None, progress=None):
+        def callback(**kwargs):
             pass
 
     try:
@@ -328,6 +337,11 @@ async def update(component: Component, paths: paths.Paths, release_type: str,
                 old_version_path = component.path.with_name(
                     f'{component.name.lower()} {component.version.name}')
                 if not component.replace_after_exit:
+                    if component.is_running():
+                        future = asyncio.Future()
+                        callback(signal=signals.Signal.COMPONENT_IS_RUNNING, data=(component, future))
+                        await future
+
                     message = (f'Replacing {component.name} v{current.name} with {component.name} '
                                f'v{latest.name}...')
                     logger.info(message)
@@ -352,6 +366,10 @@ async def update(component: Component, paths: paths.Paths, release_type: str,
             except Error as e:
                 logger.error(f'Update failed, {e}')
                 callback(message=f'Update failed, error:\n{e}', error=True)
+            except Exception as e:
+                logger.exception('Unknown error')
+                tb = traceback.format_exc()
+                callback(message=f'Update failed with unknown error, please report this to @Cubed#7363 on Discord.\n{e}\n{tb}', error=True)
     except asyncio.CancelledError:
         callback(message='Update cancelled.', error=True)
         raise
@@ -379,15 +397,13 @@ def main():
     else:
         logger.add(utils.root_dir() / 'logs' / 'updater.log', mode='w', encoding='utf8')
 
-    from labbie import constants
     constants_ = constants.Constants.load()
-
     paths = utils.get_paths(data_dir=constants_.data_dir)
 
     components = {
         'labbie': Component(
             'Labbie',
-            path=paths.root / 'bin' / 'labbie',
+            path=utils.built_labbie_dir(),
             version_history_url='https://labbie.blob.core.windows.net/releases/labbie_version_history.json',
             repository_url='http://localhost:8001/',
             # repository_url='https://labbie.blob.core.windows.net/releases',
@@ -395,13 +411,28 @@ def main():
         ),
         'updater': Component(
             'Updater',
-            path=paths.root / 'bin' / 'updater',
+            path=utils.built_updater_dir(),
             version_history_url='https://labbie.blob.core.windows.net/releases/updater_version_history.json',
             repository_url='http://localhost:8001/',
             # repository_url='https://labbie.blob.core.windows.net/releases',
-            version_name=version.__version__
+            version_name=version.__version__,
+            replace_after_exit=True
         )
     }
+
+    def labbie_is_running():
+        return ipc.is_running()
+
+    def labbie_close_and_continue(future):
+        async def task():
+            mm = ipc.instances_shm()
+            ipc.signal_exit(mm)
+            while ipc.should_exit(mm):
+                await asyncio.sleep(0.05)
+            future.set_result(None)
+        asyncio.create_task(task())
+
+    components['labbie'].set_running_handlers(labbie_is_running, labbie_close_and_continue)
 
     component = components[args.component]
     release_type = 'prerelease' if args.prerelease else 'release'
@@ -417,13 +448,13 @@ def main():
     styles.dark(app)
 
     utils.fix_taskbar_icon()
-    icon_path = utils.assets_dir() / 'icon5.ico'
+    icon_path = utils.assets_dir() / 'icon.ico'
     app.setWindowIcon(QtGui.QIcon(str(icon_path)))
 
     window = update_window.UpdateWindow()
     window.show()
 
-    def callback(message=None, last=None, error=False, progress=None):
+    def callback(message=None, last=None, error=False, progress=None, signal=None, data=None):
         if last is None:
             last = (progress == 100)
 
@@ -433,28 +464,29 @@ def main():
         if progress is not None:
             window.set_progress(progress)
 
-    # window.add_message('Foo')
-    # window.add_message('Bar')
-    # window.set_progress(40)
-    # # window.add_message('This is a bad error.', error=True)
-    # window.set_progress(100)
+        if signal and signal is signals.Signal.COMPONENT_IS_RUNNING:
+            component, future = data
+            window.ask_to_close(component, future)
 
     loop = qasync.QSelectorEventLoop(app)
     asyncio.set_event_loop(loop)
 
     with loop:
-        # loop.run_until_complete(start(log_filter))
-        # loop.set_debug(True)
-        import logging
-        logging.getLogger("asyncio").setLevel(logging.ERROR)
+        # import logging
+        # logging.getLogger("asyncio").setLevel(logging.ERROR)
         if args.action == 'update':
             update_task = loop.create_task(update(component, paths, release_type, callback))
             window.set_task(update_task)
             try:
                 loop.run_until_complete(update_task)
+                sys.exit(loop.run_forever())
             except asyncio.CancelledError:
-                pass
-            sys.exit(loop.run_forever())
+                sys.exit(loop.run_forever())
+            except RuntimeError as e:
+                if str(e) != 'Event loop stopped before Future completed.':
+                    raise
+                else:
+                    update_task.cancel()
 
 
 if __name__ == '__main__':

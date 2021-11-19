@@ -1,5 +1,5 @@
-from PyQt5.QtCore import Qt, QMetaObject, pyqtSignal, pyqtSlot
-from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QToolButton, QLabel, QSizePolicy, QDialog, QMessageBox)
+from qtpy.QtCore import Qt, QMetaObject, Signal, Slot
+from qtpy.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QToolButton, QLabel, QSizePolicy, QDialog, QMessageBox)
 from ._utils import QT_VERSION, PLATFORM, resource_path
 
 
@@ -15,7 +15,7 @@ class WindowDragger(QWidget):
             parent (QWidget, optional): Parent widget.
     """
 
-    doubleClicked = pyqtSignal()
+    doubleClicked = Signal()
 
     def __init__(self, window, parent=None):
         QWidget.__init__(self, parent)
@@ -237,11 +237,11 @@ class ModernWindow(QWidget):
 
         QWidget.setWindowFlags(self, Qt_WindowFlags)
 
-    @pyqtSlot()
+    @Slot()
     def on_btnMinimize_clicked(self):
         self.setWindowState(Qt.WindowMinimized)
 
-    @pyqtSlot()
+    @Slot()
     def on_btnRestore_clicked(self):
         if self.btnMaximize.isEnabled() or self.btnRestore.isEnabled():
             self.btnRestore.setVisible(False)
@@ -251,7 +251,7 @@ class ModernWindow(QWidget):
 
         self.setWindowState(Qt.WindowNoState)
 
-    @pyqtSlot()
+    @Slot()
     def on_btnMaximize_clicked(self):
         if self.btnMaximize.isEnabled() or self.btnRestore.isEnabled():
             self.btnRestore.setVisible(True)
@@ -261,11 +261,11 @@ class ModernWindow(QWidget):
 
         self.setWindowState(Qt.WindowMaximized)
 
-    @pyqtSlot()
+    @Slot()
     def on_btnClose_clicked(self):
         self.close()
 
-    @pyqtSlot()
+    @Slot()
     def on_titleBar_doubleClicked(self):
         if not bool(self.windowState() & Qt.WindowMaximized):
             self.on_btnMaximize_clicked()
@@ -377,11 +377,11 @@ class ModernDialog(QDialog):
 
         QWidget.setWindowFlags(self, Qt_WindowFlags)
 
-    @pyqtSlot()
+    @Slot()
     def on_btnMinimize_clicked(self):
         self.setWindowState(Qt.WindowMinimized)
 
-    @pyqtSlot()
+    @Slot()
     def on_btnRestore_clicked(self):
         if self.btnMaximize.isEnabled() or self.btnRestore.isEnabled():
             self.btnRestore.setVisible(False)
@@ -391,7 +391,7 @@ class ModernDialog(QDialog):
 
         self.setWindowState(Qt.WindowNoState)
 
-    @pyqtSlot()
+    @Slot()
     def on_btnMaximize_clicked(self):
         if self.btnMaximize.isEnabled() or self.btnRestore.isEnabled():
             self.btnRestore.setVisible(True)
@@ -401,11 +401,11 @@ class ModernDialog(QDialog):
 
         self.setWindowState(Qt.WindowMaximized)
 
-    @pyqtSlot()
+    @Slot()
     def on_btnClose_clicked(self):
         self.close()
 
-    @pyqtSlot()
+    @Slot()
     def on_titleBar_doubleClicked(self):
         if not bool(self.windowState() & Qt.WindowMaximized):
             self.on_btnMaximize_clicked()

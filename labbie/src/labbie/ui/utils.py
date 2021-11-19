@@ -1,7 +1,8 @@
 import pathlib
 from typing import Tuple, Union
 
-from PyQt5 import QtGui, QtWidgets
+from qtpy import QtGui
+from qtpy import QtWidgets
 
 from labbie import utils
 

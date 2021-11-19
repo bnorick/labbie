@@ -1,4 +1,4 @@
-from PyQt5.QtGui import QPalette, QColor
+from qtpy.QtGui import QPalette, QColor
 from ._utils import QT_VERSION, resource_path
 
 _STYLESHEET = resource_path('resources/style.qss')
@@ -11,7 +11,6 @@ def _apply_base_theme(app):
         Args:
             app (QApplication): QApplication instance.
     """
-
     if QT_VERSION < (5,):
         app.setStyle('plastique')
     else:
@@ -63,7 +62,7 @@ def dark(app):
                          QColor(127, 127, 127))
 
     app.setPalette(darkPalette)
-    
+
     _apply_base_theme(app)
 
 
@@ -111,4 +110,4 @@ def light(app):
     app.setPalette(lightPalette)
 
     _apply_base_theme(app)
-    
+
