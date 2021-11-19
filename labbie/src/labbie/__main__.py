@@ -1,5 +1,6 @@
 import argparse
 import asyncio
+import atexit
 import os
 import sys
 
@@ -89,6 +90,9 @@ async def handle_ipc(app_presenter):
     while True:
         if ipc.should_exit():
             app_presenter.shutdown()
+            def signal_back():
+                ipc.exited()
+            atexit.register(signal_back)
             return
 
         if ipc.should_foreground():

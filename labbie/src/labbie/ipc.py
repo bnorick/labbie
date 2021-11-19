@@ -62,6 +62,7 @@ def initialize(force=False):
             signal_exit()
             while should_exit():
                 time.sleep(0.05)
+            set_running_version()
         else:
             signal_foreground()
             logger.info(f'Labbie v{version.from_tuple(running_version)} is already running.')
@@ -89,19 +90,30 @@ def get_running_version():
     return tuple(version)
 
 
+def set_running_version():
+    shm = get_shm()
+    for index, val in enumerate(version.VERSION_NUMBER, start=_VERSION_START_INDEX):
+        shm[index] = val
+
+
 def signal_exit():
     shm = get_shm()
     shm[_EXIT_SIGNAL_INDEX] = True
 
 
-def signal_foreground():
-    shm = get_shm()
-    shm[_INSTANCES_INDEX] += 1
-
-
 def should_exit():
     shm = get_shm()
     return shm[_EXIT_SIGNAL_INDEX]
+
+
+def exited():
+    shm = get_shm()
+    shm[_EXIT_SIGNAL_INDEX] = False
+
+
+def signal_foreground():
+    shm = get_shm()
+    shm[_INSTANCES_INDEX] += 1
 
 
 def should_foreground():
