@@ -32,7 +32,6 @@ from updater.vendor.qtmodern import styles
 logger = loguru.logger
 
 
-
 class Error(Exception):
     pass
 
@@ -404,17 +403,15 @@ def main():
         'labbie': Component(
             'Labbie',
             path=utils.built_labbie_dir(),
-            version_history_url='https://labbie.blob.core.windows.net/releases/labbie_version_history.json',
-            repository_url='http://localhost:8001/',
-            # repository_url='https://labbie.blob.core.windows.net/releases',
+            version_history_url='https://labbie.blob.core.windows.net/releases/components/labbie/version_history.json',
+            repository_url='https://labbie.blob.core.windows.net/releases',
             version_name=args.current_version or utils.get_labbie_version()
         ),
         'updater': Component(
             'Updater',
             path=utils.built_updater_dir(),
-            version_history_url='https://labbie.blob.core.windows.net/releases/updater_version_history.json',
-            repository_url='http://localhost:8001/',
-            # repository_url='https://labbie.blob.core.windows.net/releases',
+            version_history_url='https://labbie.blob.core.windows.net/releases/components/updater/version_history.json',
+            repository_url='https://labbie.blob.core.windows.net/releases',
             version_name=version.__version__,
             replace_after_exit=True
         )
