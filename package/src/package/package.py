@@ -1,10 +1,11 @@
 import cx_Freeze
 import setuptools
 
+from package import utils
+
 
 def package_labbie():
     from labbie import version
-    from package import utils
 
     labbie_dir = utils.labbie_dir()
     labbie_build_dir = utils.labbie_build_dir()
@@ -57,7 +58,6 @@ def package_labbie():
 
 def package_updater():
     from updater import version
-    from package import utils
 
     updater_dir = utils.updater_dir()
     updater_build_dir = utils.updater_build_dir()
