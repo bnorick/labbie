@@ -46,7 +46,7 @@ class Version:
     id: int
 
     def is_prerelease(self):
-        return 'rc' in self.name
+        return '-' in self.name
 
     @property
     def core(self):
@@ -115,7 +115,7 @@ class Component:
         return self.versions[self._version_name_to_id[latest]]
 
     def previous_release(self, version_from: Version):
-        for index in range(version_from.id - 1, 0, -1):
+        for index in reversed(range(version_from.id)):
             version = self.versions[index]
             if not version.is_prerelease():
                 return version
@@ -298,9 +298,8 @@ async def update(component: Component, paths: paths.Paths, release_type: str,
             @utils.wrap
             def replace(current_path: pathlib.Path, old_path: pathlib.Path, new_path: str):
                 if old_path.exists():
-                    shutil.rmtree(str(current_path))
-                else:
-                    shutil.move(str(current_path), str(old_path))
+                    shutil.rmtree(str(old_path))
+                shutil.move(str(current_path), str(old_path))
                 shutil.move(new_path, str(current_path))
 
             try:
@@ -318,13 +317,14 @@ async def update(component: Component, paths: paths.Paths, release_type: str,
                     callback(message=message, progress=progress)
                     logger.info(message)
                     await download(updater_, target, destination_directory)
-                    # updater_.download_target(target, destination_directory)
                     progress += per_action
 
                     message = f'Applying {target["filepath"]}...'
                     logger.info(message)
                     callback(message=message, progress=progress)
                     try:
+                        # with (paths.downloads / target['filepath']).open('rb') as f:
+                        #     patch.apply_patch(temp_dir, f)
                         await apply(temp_dir, paths.downloads / target['filepath'])
                     except patch.PatchError as e:
                         message = f'Error while applying patch ({e}).'
@@ -422,10 +422,8 @@ def main():
 
     def labbie_close_and_continue(future):
         async def task():
-            mm = ipc.instances_shm()
-            ipc.signal_exit(mm)
-            while ipc.should_exit(mm):
-                await asyncio.sleep(0.05)
+            ipc.signal_exit()
+            await ipc.wait_for_exit_async()
             future.set_result(None)
         asyncio.create_task(task())
 

@@ -1,3 +1,4 @@
+import asyncio
 import sys
 from multiprocessing import shared_memory
 import time
@@ -60,8 +61,7 @@ def initialize(force=False):
             logger.info(f'Labbie v{version.from_tuple(running_version)} is already running, communicating '
                         f'that it should exit.')
             signal_exit()
-            while should_exit():
-                time.sleep(0.05)
+            wait_for_exit()
             set_running_version()
         else:
             signal_foreground()
@@ -124,3 +124,13 @@ def should_foreground():
 def foregrounded():
     shm = get_shm()
     shm[_INSTANCES_INDEX] = 1
+
+
+def wait_for_exit():
+    while should_exit():
+        time.sleep(0.05)
+
+
+async def wait_for_exit_async():
+    while should_exit():
+        await asyncio.sleep(0.05)

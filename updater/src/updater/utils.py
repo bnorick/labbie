@@ -14,25 +14,21 @@ logger = loguru.logger
 
 
 def root_dir():
-    if getattr(sys, 'frozen', False):
-        # The application is frozen
+    if getattr(sys, '_really_frozen', False):
         # root/bin/updater/Updater.exe
-        return pathlib.Path(sys.executable).parent.parent.parent
+        return pathlib.Path(sys.executable).parent.parent.parent.resolve()
     else:
-        # The application is not frozen
         # root/updater/src/updater/utils.py
-        return pathlib.Path(__file__).parent.parent.parent.parent
+        return pathlib.Path(__file__).parent.parent.parent.parent.resolve()
 
 
 def updater_dir():
-    if getattr(sys, 'frozen', False):
-        # The application is frozen
+    if getattr(sys, '_really_frozen', False):
         # .../updater/Updater.exe
-        return pathlib.Path(sys.executable).parent
+        return pathlib.Path(sys.executable).parent.resolve()
     else:
-        # The application is not frozen
         # .../updater/src/updater/utils.py
-        return pathlib.Path(__file__).parent.parent.parent
+        return pathlib.Path(__file__).parent.parent.parent.resolve()
 
 
 def assets_dir():
@@ -40,27 +36,31 @@ def assets_dir():
 
 
 def built_labbie_dir():
-    if getattr(sys, 'frozen', False):
+    if getattr(sys, '_really_frozen', False):
         return root_dir() / 'bin' / 'labbie'
     else:
         return root_dir() / 'package' / 'build' / 'Labbie' / 'bin' / 'labbie'
 
 
 def built_updater_dir():
-    if getattr(sys, 'frozen', False):
+    if getattr(sys, '_really_frozen', False):
         return root_dir() / 'bin' / 'updater'
     else:
         return root_dir() / 'package' / 'build' / 'Labbie' / 'bin' / 'updater'
 
 
-def assets_dir():
-    return updater_dir() / 'assets'
-
-
 def update_path():
-    if getattr(sys, 'frozen', False):
-        sys.path.append(str(root_dir() / 'bin' / 'labbie' / 'lib'))
+    sys.path.append(str(built_labbie_dir() / 'lib'))
+    if getattr(sys, '_really_frozen', False):
         sys.path.append(str(root_dir() / 'lib'))
+
+
+def fake_freeze():
+    # Act as if we're frozen all the time, for the purposes of python code like the labbie package
+    # but maintain true frozen state to use internally
+    really_frozen = getattr(sys, 'frozen', False)
+    sys.frozen = True
+    sys._really_frozen = really_frozen
 
 
 def get_paths(data_dir: pathlib.Path = None):
@@ -72,28 +72,30 @@ def resolve_path(path: Union[str, pathlib.Path]):
 
 
 def get_labbie_version():
-    labbie_dir = built_labbie_dir()
-    if not (labbie_dir / 'Labbie.com').exists():
-        raise RuntimeError(f'Missing labbie build at {labbie_dir}')
-    startupinfo = subprocess.STARTUPINFO()
-    startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-    startupinfo.wShowWindow = subprocess.SW_HIDE
-    stdout_file = tempfile.NamedTemporaryFile(mode='r+', delete=False)
-    process = subprocess.Popen(
-        [str(labbie_dir / 'Labbie.com'), '--version'],
-        stdin=subprocess.PIPE,
-        stdout=stdout_file,
-        stderr=subprocess.PIPE,
-        shell=False,
-        startupinfo=startupinfo
-    )
-    return_code = process.wait()
-    stdout_file.flush()
-    stdout_file.seek(0)  # This is required to reset position to the start of the file
-    version = stdout_file.read()
-    stdout_file.close()
+    # labbie_dir = built_labbie_dir()
+    # if not (labbie_dir / 'Labbie.com').exists():
+    #     raise RuntimeError(f'Missing labbie build at {labbie_dir}')
+    # startupinfo = subprocess.STARTUPINFO()
+    # startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+    # startupinfo.wShowWindow = subprocess.SW_HIDE
+    # stdout_file = tempfile.NamedTemporaryFile(mode='r+', delete=False)
+    # process = subprocess.Popen(
+    #     [str(labbie_dir / 'Labbie.com'), '--version'],
+    #     stdin=subprocess.PIPE,
+    #     stdout=stdout_file,
+    #     stderr=subprocess.PIPE,
+    #     shell=False,
+    #     startupinfo=startupinfo
+    # )
+    # return_code = process.wait()
+    # stdout_file.flush()
+    # stdout_file.seek(0)  # This is required to reset position to the start of the file
+    # version = stdout_file.read()
+    # stdout_file.close()
 
-    return version
+    # return version
+    from labbie import version
+    return version.__version__
 
 
 def rename_later(path_from, path_to, delay):

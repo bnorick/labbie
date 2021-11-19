@@ -81,7 +81,7 @@ class SettingsPresenter:
         self._view.right = str(right + 1)
         self._view.bottom = str(bottom + 1)
 
-    async def on_save(self, checked):
+    async def on_save(self):
         try:
             left = int(self._view.left)
             top = int(self._view.top)

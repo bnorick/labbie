@@ -1167,10 +1167,29 @@ class Differ(object):
         """
         spos = 0
         with open(target,"rb") as tfile:
+            if target.endswith('.pyc'):
+                # NOTE(bnorick): Non-deterministic pyc files produced by cx_Freeze were causing issues
+                # so we copy them wholesale. In this case, we don't care about the source at all, and
+                # simply want to copy over the target.
+                tdata = tfile.read(self.diff_window_size)
+                if not tdata:
+                    #  The file is empty, do a raw insert of zero bytes.
+                    self._write_command(PF_INS_RAW)
+                    self._write_bytes("".encode("ascii"))
+                else:
+                    while tdata:
+                        # print(tdata)
+                        self._write_command(PF_INS_RAW)
+                        self._write_bytes(tdata)
+                        tdata = tfile.read(self.diff_window_size)
+                return
+
+
             if os.path.isfile(source):
                 sfile = open(source,"rb")
             else:
                 sfile = None
+
             try:
                 #  Process the file in diff_window_size blocks.  This
                 #  will produce slightly bigger patches but we avoid
@@ -1187,7 +1206,7 @@ class Differ(object):
                             sdata = sfile.read(self.diff_window_size)
                         #  Look for a shared prefix.
                         i = 0; maxi = min(len(tdata),len(sdata))
-                        while i < maxi and tdata[i] == sdata[i]:
+                        while i < maxi and (tdata[i] == sdata[i]):
                             i += 1
                         #  Copy it in directly, unless it's tiny.
                         if i > 8:

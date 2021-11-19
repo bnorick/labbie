@@ -24,7 +24,7 @@ class Paths:
 
         if not self.repo.exists():
             # paths which depend on frozen state
-            if getattr(sys, 'frozen', False):
+            if getattr(sys, '_really_frozen', False):
                 repo_source = self.root / 'bin' / 'updater' / 'repo'
             else:
                 repo_source = self.root / 'updater' / 'repo'
