@@ -7,7 +7,6 @@ authors = ["Brandon Norick <b.norick@gmail.com>"]
 [tool.poetry.dependencies]
 python = "~3.8"
 aiohttp = "^3.8.0"
-PyQt5 = "^5.15.6"
 qasync = "^0.22.0"
 pytesseract = "^0.3.8"
 Pillow = "^8.4.0"
@@ -21,6 +20,8 @@ numpy = "^1.21.4"
 opencv-python-headless = "^4.5.4"
 pyperclip = "^1.8.2"
 datrie = "^0.8.2"
+PySide2 = "^5.15.2"
+QtPy = "^1.11.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
@@ -30,7 +31,7 @@ poetry2setup = "^1.0.0"
 
 [tool.poetry.scripts]
 labbie = "labbie.__main__:main"
-package = "package:package"
+build = "package:package"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

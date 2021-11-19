@@ -4,7 +4,8 @@ from typing import List, Optional
 import cv2 as cv
 import loguru
 import numpy as np
-from PIL import ImageGrab, Image
+from PIL import Image
+from PIL import ImageGrab
 import pytesseract
 
 from labbie import bounds

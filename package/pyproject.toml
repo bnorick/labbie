@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "package"
+version = "0.1.0"
+description = ""
+authors = ["Brandon Norick <b.norick@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "~3.8"
+cx-Freeze = "^6.8.2"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+labbie = { path = "../labbie", develop = true }
+updater = { path = "../updater", develop = true }
+
+[tool.poetry.scripts]
+build = "package.__main__:main"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

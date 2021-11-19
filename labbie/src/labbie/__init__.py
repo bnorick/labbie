@@ -1,3 +1,3 @@
-from labbie import version
+from labbie import utils
 
-__version__ = version.__version__
+utils.update_path()

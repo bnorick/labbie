@@ -5,9 +5,9 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 
 import injector
 import pyperclip
-from PyQt5 import QtCore
-from PyQt5 import QtGui
-from PyQt5 import QtWidgets
+from qtpy import QtCore
+from qtpy import QtGui
+from qtpy import QtWidgets
 
 from labbie.ui import base
 from labbie.ui import clickable_label

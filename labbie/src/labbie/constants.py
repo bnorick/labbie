@@ -8,8 +8,9 @@ import dacite
 import loguru
 import toml
 
-from labbie import mixins, version
+from labbie import mixins
 from labbie import utils
+from labbie import version
 
 logger = loguru.logger
 _DEFAULT_DATA_DIR = utils.default_data_dir()

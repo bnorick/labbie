@@ -1,12 +1,8 @@
 import atexit
-import contextlib
 import dataclasses
-import mmap
 import os
 import pathlib
 import sys
-from typing import Optional
-import aiohttp
 
 import loguru
 
@@ -16,9 +12,22 @@ logger = loguru.logger
 def root_dir():
     if getattr(sys, 'frozen', False):
         # The application is frozen
+        # .../root/bin/labbie/Labbie.exe
+        return pathlib.Path(sys.executable).parent.parent.parent
+    else:
+        # The application is not frozen
+        # .../root/labbie/src/labbie/utils.py
+        return pathlib.Path(__file__).parent.parent.parent.parent
+
+
+def labbie_dir():
+    if getattr(sys, 'frozen', False):
+        # The application is frozen
+        # .../labbie/Labbie.exe
         return pathlib.Path(sys.executable).parent
     else:
         # The application is not frozen
+        # .../labbie/src/labbie/utils.py
         return pathlib.Path(__file__).parent.parent.parent
 
 
@@ -27,7 +36,7 @@ def logs_dir():
 
 
 def assets_dir():
-    return root_dir() / 'assets'
+    return labbie_dir() / 'assets'
 
 
 def bin_dir():
@@ -40,6 +49,11 @@ def default_config_dir():
 
 def default_data_dir():
     return root_dir() / 'data'
+
+
+def update_path():
+    if getattr(sys, 'frozen', False):
+        sys.path.append(str(root_dir() / 'lib'))
 
 
 def relaunch(debug, exit_fn=None):
@@ -61,18 +75,6 @@ def relaunch(debug, exit_fn=None):
         exit_fn()
     else:
         sys.exit(0)
-
-
-def instances_shm():
-    return mmap.mmap(-1, 1, 'labbie_instances')
-
-
-def exit_if_already_running():
-    mm = instances_shm()
-    if mm[0] > 0:
-        mm[0] += 1
-        logger.info(f'Labbie is already running, instances={mm[0]}')
-        sys.exit()
 
 
 def make_slotted_dataclass(cls):
@@ -99,15 +101,6 @@ def make_slotted_dataclass(cls):
     if qualname is not None:
         cls.__qualname__ = qualname
     return cls
-
-
-@contextlib.asynccontextmanager
-async def client_session(session: Optional[aiohttp.ClientSession] = None) -> aiohttp.ClientSession:
-    if session:
-        yield session
-    else:
-        async with aiohttp.ClientSession() as session:
-            yield session
 
 
 class LogFilter:

@@ -23,6 +23,9 @@ class SystemTrayIconPresenter:
     def show(self):
         self._view.show()
 
+    def exit(self):
+        self._view.exit()
+
     def _at_exit(self):
         try:
             self._view.hide()

@@ -5,12 +5,13 @@ import sys
 
 import injector
 import loguru
-from PyQt5 import QtGui
-from PyQt5 import QtWidgets
+from qtpy import QtGui
+from qtpy import QtWidgets
 import qasync
 
 from labbie import config
 from labbie import constants
+from labbie import ipc
 from labbie import resources
 from labbie import state
 from labbie import utils
@@ -28,20 +29,28 @@ _Constants = constants.Constants
 
 def parse_args():
     parser = argparse.ArgumentParser('Labbie')
+    parser.add_argument('--version', action='store_true', help='Print version')
     parser.add_argument('--debug', action='store_true', help='Enable debug mode')
+    parser.add_argument('--force', action='store_true',
+                        help='Force this instance of Labbie or override any others which are running.')
     return parser.parse_args()
 
 
 def main():
-    utils.logs_dir().mkdir(exist_ok=True, parents=True)
-    utils.exit_if_already_running()
-
     args = parse_args()
-    if args.debug:
+    if args.version:
+        from labbie import version
+        print(version.__version__, end='')
+        sys.exit()
+    elif args.debug:
         os.environ['LABBIE_DEBUG'] = '1'
 
-    logger.remove()
+    utils.logs_dir().mkdir(exist_ok=True, parents=True)
+    ipc.initialize(force=args.force)
+
     log_path = utils.logs_dir() / 'current_run.log'
+    logger.info(f'Switching logging to file: {log_path}')
+    logger.remove()
     if log_path.is_file():
         prev_log_path = log_path.with_name('prev_run.log')
         # delete prev log if it exists
@@ -73,14 +82,19 @@ def main():
         sys.exit(loop.run_forever())
 
 
-async def focus_if_other_instances(app_presenter):
-    mm = utils.instances_shm()
-    mm[0] = 1
+async def handle_ipc(app_presenter):
+    # Focuses the app when other instances start
+    # Exits the app when other instances signal to exit
+    mm = ipc.instances_shm()
+
     while True:
-        if mm[0] > 1:
-            logger.info(f'instances={mm[0]}')
+        if ipc.should_exit(mm):
+            app_presenter.shutdown()
+            return
+
+        if ipc.should_foreground(mm):
             app_presenter.foreground()
-            mm[0] = 1
+            ipc.foregrounded(mm)
         await asyncio.sleep(0.1)
 
 
@@ -111,7 +125,7 @@ async def start(log_filter):
 
     app_presenter = injector.get(app.AppPresenter)
     app_presenter.launch()
-    asyncio.create_task(focus_if_other_instances(app_presenter))
+    asyncio.create_task(handle_ipc(app_presenter))
 
 
 if __name__ == '__main__':

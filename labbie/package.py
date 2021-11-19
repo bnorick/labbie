@@ -1,24 +1,11 @@
 # -*- coding: utf-8 -*-
+import pathlib
+
 import cx_Freeze
 import setuptools
 
 package_dir = {'': 'src'}
 
-# packages = [
-#     'labbie',
-#     'labbie.di',
-#     'labbie.ui',
-#     'labbie.ui.app',
-#     'labbie.ui.result.widget',
-#     'labbie.ui.search',
-#     'labbie.ui.search.widget',
-#     'labbie.ui.search.window',
-#     'labbie.ui.settings',
-#     'labbie.ui.settings.widget',
-#     'labbie.ui.settings.window',
-#     'labbie.ui.system_tray',
-#     'labbie.vendor.qtmodern'
-# ]
 
 packages = setuptools.find_packages('src')
 
@@ -42,6 +29,21 @@ install_requires = [
     'toml>=0.10.2,<0.11.0'
 ]
 
+
+executables = [
+    cx_Freeze.Executable(
+        'entry_point.py',
+        base='Win32GUI',
+        target_name='Labbie.exe',
+        icon='assets/icon.ico'
+    ),
+    cx_Freeze.Executable(
+        'entry_point.py',
+        base=None,
+        target_name='Labbie.com'
+    )
+]
+
 setup_kwargs = {
     'name': 'labbie',
     'version': '0.6.0',
@@ -60,15 +62,22 @@ setup_kwargs = {
     'options': {
         'build_exe': {
             # 'packages': ['pygame', 'random', 'ConfigParser', 'sys'],
-            'include_files': ['assets', 'bin', 'config', 'README.md', 'LICENSE']
+            # 'include_files': ['assets', 'bin', 'config', 'README.md', 'LICENSE']
+            'include_files': ['assets', 'LICENSE']
         }
     },
-    'executables': [cx_Freeze.Executable('entry_point.py', base='Win32GUI', target_name='Labbie.exe', icon='assets/taxi-32.ico')],
+    'executables': executables,
 }
 
 
 def package():
+    import sys
+    if len(sys.argv) == 1:
+        sys.argv.append('build')
     cx_Freeze.setup(**setup_kwargs)
+    build_dir = pathlib.Path(__file__).parent / 'build'
+    for path in build_dir.rglob('Labbie.com.exe'):
+        path.rename(path.with_suffix(''))
 
 
 if __name__ == '__main__':

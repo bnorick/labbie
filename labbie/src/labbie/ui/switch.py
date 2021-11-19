@@ -1,6 +1,6 @@
-from PyQt5 import QtCore
-from PyQt5 import QtGui
-from PyQt5 import QtWidgets
+from qtpy import QtCore
+from qtpy import QtGui
+from qtpy import QtWidgets
 
 Qt = QtCore.Qt
 
@@ -61,7 +61,7 @@ class Switch(QtWidgets.QAbstractButton):
             }
             self._track_opacity = 1
 
-    @QtCore.pyqtProperty(int)
+    @QtCore.Property(int)
     def offset(self):
         return self._offset
 

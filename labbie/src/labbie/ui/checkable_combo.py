@@ -1,8 +1,9 @@
-from PyQt5 import QtCore
-from PyQt5 import QtGui
-from PyQt5 import QtWidgets
+from qtpy import QtCore
+from qtpy import QtGui
+from qtpy import QtWidgets
 
 Qt = QtCore.Qt
+from qtpy import QtWidgets
 
 # From https://stackoverflow.com/a/22775990
 # Licensed under CC-BY-SA 3.0 (https://creativecommons.org/licenses/by-sa/3.0/)
@@ -29,7 +30,7 @@ class CheckableComboBox(QtWidgets.QComboBox):
         self.setEditable(True)
         self.lineEdit().setReadOnly(True)
         # Make the lineedit the same color as QPushButton
-        palette = QtWidgets.qApp.palette()
+        palette = QtWidgets.QApplication.instance().palette()
         palette.setBrush(QtGui.QPalette.ColorRole.Base, palette.button())
         self.lineEdit().setPalette(palette)
 

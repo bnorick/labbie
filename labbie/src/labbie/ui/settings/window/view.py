@@ -1,4 +1,4 @@
-from PyQt5 import QtCore
+from qtpy import QtCore
 
 from labbie.ui import base
 from labbie.ui.settings.widget import view as settings_widget

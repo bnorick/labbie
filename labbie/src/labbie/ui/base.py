@@ -1,9 +1,9 @@
 import inspect
 
 import loguru
-from PyQt5 import QtCore
-from PyQt5 import QtGui
-from PyQt5 import QtWidgets
+from qtpy import QtCore
+from qtpy import QtGui
+from qtpy import QtWidgets
 import qasync
 
 from labbie.vendor.qtmodern import windows
@@ -81,7 +81,7 @@ class BaseWindow(windows.ModernWindow):
 
 
 class BaseWidget(QtWidgets.QWidget):
-    signal_close = QtCore.pyqtSignal(name='close')
+    signal_close = QtCore.Signal(name='close')
 
     def center_on_screen(self, adjust_size=True):
         if adjust_size:
@@ -94,7 +94,8 @@ class BaseWidget(QtWidgets.QWidget):
             last = parent
             parent = parent.parent()
 
-        last.move(QtWidgets.QApplication.instance().desktop().screen().rect().center() - last.rect().center())
+        desktop = QtWidgets.QApplication.instance().desktop()
+        last.move(desktop.screen().rect().center() - last.rect().center())
 
     @staticmethod
     def _connect_signal_to_slot(signal, slot):

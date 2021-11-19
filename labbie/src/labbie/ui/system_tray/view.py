@@ -1,15 +1,15 @@
 import inspect
 
 import qasync
-from PyQt5 import QtCore
-from PyQt5 import QtGui
-from PyQt5 import QtWidgets
+from qtpy import QtCore
+from qtpy import QtGui
+from qtpy import QtWidgets
 
 from labbie.ui import utils
 
 
 class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
-    doubleClicked = QtCore.pyqtSignal()
+    doubleClicked = QtCore.Signal()
 
     def __init__(self):
         super().__init__()
