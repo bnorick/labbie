@@ -198,7 +198,7 @@ class ResultWidget(base.BaseWidget):
                         context_menu_index=menu_item.index
                     )
                 )
-        menu.exec(list_results.mapToGlobal(point))
+        menu.exec_(list_results.mapToGlobal(point))
 
     def _add_context_menu_result(self, source: DisplayResult, source_row: int, context_menu_index: int):
         context_menu_item = source.context_menu_items[context_menu_index]
