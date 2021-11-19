@@ -1,4 +1,4 @@
-__version__ = '0.8.0-rc.2'
+__version__ = '0.7.0-alpha.1'
 
 from typing import Tuple
 
