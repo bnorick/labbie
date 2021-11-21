@@ -518,7 +518,8 @@ def really_rename(source,target):
             try:
                 os.rename(source,target)
             except WindowsError as e:
-                if e.errno not in (errno.EACCES,):
+                print(e.errno)
+                if e.errno not in (errno.EACCES, ):
                     raise
                 time.sleep(0.01)
             else:
@@ -546,7 +547,7 @@ def really_rmtree(path):
             try:
                 shutil.rmtree(path)
             except WindowsError as e:
-                if e.errno in (errno.ENOTEMPTY,errno.EACCES,):
+                if e.errno in (errno.ENOTEMPTY, errno.EACCES, ):
                     time.sleep(0.01)
                 elif e.errno == errno.ENOENT:
                     if not os.path.exists(path):

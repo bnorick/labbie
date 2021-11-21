@@ -1,4 +1,5 @@
 import atexit
+import contextlib
 import dataclasses
 import os
 import pathlib
@@ -8,9 +9,26 @@ import loguru
 
 logger = loguru.logger
 
+_FROZEN = getattr(sys, 'frozen', False)
+
+
+def is_frozen():
+    return _FROZEN
+
+
+@contextlib.contextmanager
+def temporary_freeze():
+    global _FROZEN
+    orig = _FROZEN
+    try:
+        _FROZEN = True
+        yield
+    finally:
+        _FROZEN = orig
+
 
 def root_dir():
-    if getattr(sys, 'frozen', False):
+    if is_frozen():
         # The application is frozen
         # .../root/bin/labbie/Labbie.exe
         return pathlib.Path(sys.executable).parent.parent.parent
@@ -21,7 +39,7 @@ def root_dir():
 
 
 def labbie_dir():
-    if getattr(sys, 'frozen', False):
+    if is_frozen():
         # The application is frozen
         # .../labbie/Labbie.exe
         return pathlib.Path(sys.executable).parent
@@ -52,7 +70,7 @@ def default_data_dir():
 
 
 def update_path():
-    if getattr(sys, 'frozen', False):
+    if is_frozen():
         sys.path.append(str(root_dir() / 'lib'))
 
 
@@ -65,7 +83,7 @@ def relaunch(debug, exit_fn=None):
         cmd.append(f'"{sys.argv[0]}"')
     if debug:
         cmd.append('--debug')
-    if not getattr(sys, 'frozen', False):
+    if not is_frozen():
         cmd.insert(0, f'"{sys.executable}"')
 
     logger.info(f'{sys.argv=}')

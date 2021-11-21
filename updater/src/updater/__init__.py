@@ -1,4 +1,4 @@
 from updater import utils
 
-utils.fake_freeze()
+# utils.freeze_others()
 utils.update_path()

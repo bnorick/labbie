@@ -1,6 +1,6 @@
-__version__ = '0.7.0-alpha.2'
-
 from typing import Tuple
+
+__version__ = '0.7.0-alpha.5'
 
 _PRERELEASE_TYPE_VALUE = {
     None: 1000,
@@ -12,26 +12,28 @@ _PRERELEASE_VALUE_TYPE = {
     v: k for k, v in _PRERELEASE_TYPE_VALUE.items()
 }
 
-VERSION_NUMBER = []
-_version, *_prerelease = __version__.split('-')
-for part in _version.split('.'):
-    VERSION_NUMBER.append(int(part))
 
-if _prerelease:
-    prerelease_type, *prerelease_version = _prerelease[0].split('.')
-    if not prerelease_version:
-        raise ValueError(f'Invalid prerelease version, missing prerelease version number: {_prerelease}')
+def to_tuple(version: str):
+    version_number = []
+    core, *prerelease = version.split('-')
+    for part in core.split('.'):
+        version_number.append(int(part))
 
-    try:
-        VERSION_NUMBER.append(_PRERELEASE_TYPE_VALUE[prerelease_type])
-    except KeyError:
-        raise ValueError(f'Invalid prerelease version, invalid type: {_prerelease}')
-    VERSION_NUMBER.append(int(prerelease_version[0]))
-else:
-    VERSION_NUMBER.append(_PRERELEASE_TYPE_VALUE[None])
-    VERSION_NUMBER.append(0)
+    if prerelease:
+        prerelease_type, *prerelease_version = prerelease[0].split('.')
+        if not prerelease_version:
+            raise ValueError(f'Invalid prerelease version, missing prerelease version number: {prerelease}')
 
-VERSION_NUMBER = tuple(VERSION_NUMBER)
+        try:
+            version_number.append(_PRERELEASE_TYPE_VALUE[prerelease_type])
+        except KeyError:
+            raise ValueError(f'Invalid prerelease version, invalid type: {prerelease}')
+        version_number.append(int(prerelease_version[0]))
+    else:
+        version_number.append(_PRERELEASE_TYPE_VALUE[None])
+        version_number.append(0)
+
+    return tuple(version_number)
 
 
 def from_tuple(version_number: Tuple[int, int, int, int, int]):
@@ -39,3 +41,6 @@ def from_tuple(version_number: Tuple[int, int, int, int, int]):
     prerelease_type = _PRERELEASE_VALUE_TYPE[prerelease_type_value]
     prerelease = '' if prerelease_type is None else f'-{prerelease_type}.{prerelease_version}'
     return f'{major}.{minor}.{patch}{prerelease}'
+
+
+VERSION_NUMBER = to_tuple(__version__)

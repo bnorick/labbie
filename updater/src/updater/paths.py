@@ -1,8 +1,9 @@
 import dataclasses
 import pathlib
 import shutil
-import sys
 from typing import Optional
+
+from updater import utils
 
 
 @dataclasses.dataclass
@@ -23,8 +24,7 @@ class Paths:
         self.work = self.updater_data / 'work'
 
         if not self.repo.exists():
-            # paths which depend on frozen state
-            if getattr(sys, '_really_frozen', False):
+            if utils.is_frozen():
                 repo_source = self.root / 'bin' / 'updater' / 'repo'
             else:
                 repo_source = self.root / 'updater' / 'repo'

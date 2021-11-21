@@ -1,166 +1,61 @@
 import argparse
 import asyncio
 import atexit
-import dataclasses
-import functools
 import pathlib
 import shutil
 import sys
 import tempfile
 import traceback
-from typing import Callable, List, Optional
+from typing import Callable, Optional, Tuple
 
 import loguru
 from qtpy import QtGui
 from qtpy import QtWidgets
 import qasync
-import requests
 from tuf import settings
 from tuf import exceptions
 from tuf.client import updater
 
-from labbie import constants
 from labbie import ipc
+from updater import components
+from updater import constants
+from updater import diff_utils
+from updater import errors
 from updater import patch
 from updater import paths
 from updater import signals
 from updater import utils
-from updater import version
+from updater import versions
 from updater.ui import update_window
 from updater.vendor.qtmodern import styles
 
 logger = loguru.logger
 
 
-class Error(Exception):
-    pass
-
-
-class NoSuchRelease(Error):
-    pass
-
-
-@dataclasses.dataclass(frozen=True)
-class Version:
-    name: str
-    id: int
-
-    def is_prerelease(self):
-        return '-' in self.name
-
-    @property
-    def core(self):
-        return self.name.split('-')[0]
-
-
-@dataclasses.dataclass
-class Component:
-    name: str
-    path: pathlib.Path
-    version_history_url: str
-    repository_url: str
-    version: Version = None
-    version_name: dataclasses.InitVar[str] = None
-    replace_after_exit: bool = False
-
-    def __post_init__(self, version_name: str):
-        self._version_name = version_name
-
-    def set_running_handlers(self, is_running, close_and_continue):
-        self.is_running = is_running
-        self.close_and_continue = close_and_continue
-
-    def load(self):
-        version_name = self._version_name
-
-        try:
-            self._version_name_to_id = {version.name: version.id for version in self.versions}
-        except Error as e:
-            logger.error(str(e))
-            raise
-
-        if self.version is None:
-            if version_name is None:
-                raise ValueError('Invalid arguments, either version must be set to a Version or '
-                                 'version_name must be specified.')
-            self.version = Version(name=version_name, id=self._version_name_to_id[version_name])
-
-        # clip versions to end at the last "latest"
-        try:
-            last_id = max(self._version_name_to_id[v] for v in self.version_history['latest'].values())
-        except ValueError:
-            raise ValueError(f'Invalid version_history at {self.version_history_url}, no latest versions.')
-        self.versions = self.versions[:last_id + 1]
-        self._version_name_to_id = {version.name: version.id for version in self.versions}
-
-    @functools.cached_property
-    def version_history(self):
-        resp = requests.get(self.version_history_url)
-        if resp.status_code != 200:
-            raise Error(f'Unable to download version history for component {self.name} from '
-                        f'{self.version_history_url}.')
-        return resp.json()
-
-    @functools.cached_property
-    def versions(self) -> List[Version]:
-        versions = []
-        for index, version in enumerate(self.version_history['versions']):
-            versions.append(Version(name=version, id=index))
-        return versions
-
-    def latest_version(self, type_) -> Optional[Version]:
-        latest = self.version_history['latest'].get(type_)
-        if latest is None:
-            return None
-        return self.versions[self._version_name_to_id[latest]]
-
-    def previous_release(self, version_from: Version):
-        for index in reversed(range(version_from.id)):
-            version = self.versions[index]
-            if not version.is_prerelease():
-                return version
-        raise NoSuchRelease
-
-    def next_release(self, version_from: Version):
-        for index in range(version_from.id + 1, len(self.versions)):
-            version = self.versions[index]
-            if not version.is_prerelease():
-                return version
-        raise NoSuchRelease
-
-    def next_sequential_prerelease(self, version_from: Version):
-        if version_from == self.versions[-1]:
-            raise NoSuchRelease
-        version = self.versions[version_from.id + 1]
-        if version.is_prerelease():
-            return version
-        raise NoSuchRelease
-
-
-def prerelease_reversion_target(component: Component, prerelease: Version):
+def prerelease_reversion_target(component: components.Component, prerelease: versions.Version):
     # e.g., labbie/v0_8_0-rc_3.patch.rollback
     return target(component, prerelease) + '.rollback'
 
 
-def target(component: Component, version: Version):
+def target(component: components.Component, version: versions.Version):
     # e.g., labbie/v0_8_0.patch
-    return f'{component.name.lower()}/v{version.name.replace(".", "_")}.patch'
+    return f'{component.name.lower()}/v{version.path_encoded()}.patch'
 
 
-def compatible_prerelease_versions(version_from: Version, version_to: Version):
+def compatible_prerelease_versions(version_from: versions.Version, version_to: versions.Version):
     """Checks two prerelease versions for compatibility."""
     if not version_from.is_prerelease() or not version_to.is_prerelease():
         return False
     return version_from.core == version_to.core
 
 
-def get_versions(component: Component, release_type: str):
+def get_versions(component: components.Component, release_type: str) -> Tuple[versions.Version, versions.Version]:
     current = component.version
     latest_release = component.latest_version('release')
     latest_prerelease = component.latest_version('prerelease')
 
     # when a release exists which is newer than the latest prerelease, we ignore prereleases
-    release_newer = latest_prerelease is None or latest_prerelease.id < latest_release.id
+    release_newer = latest_prerelease is None or latest_prerelease.index < latest_release.index
     if release_type == 'prerelease' and release_newer:
         release_type = 'release'
 
@@ -169,7 +64,7 @@ def get_versions(component: Component, release_type: str):
     return current, latest
 
 
-def calculate_target_names(component: Component, version_from: Version, version_to: Version):
+def calculate_target_names(component: components.Component, version_from: versions.Version, version_to: versions.Version):
     targets = []
     version = version_from
     if compatible_prerelease_versions(version_from, version_to):
@@ -190,7 +85,7 @@ def calculate_target_names(component: Component, version_from: Version, version_
         while version != version_to:
             version = component.next_release(version)
             targets.append(target(component, version))
-    except NoSuchRelease:
+    except errors.NoSuchRelease:
         # We reached the last release without reaching version_to, meaning we must be updating to
         # a prerelease. Follow the chain of prereleases from the last release.
         assert version_to.is_prerelease()
@@ -227,7 +122,7 @@ def cleanup(paths: paths.Paths):
     delete_contents(paths.work)
 
 
-async def update(component: Component, paths: paths.Paths, release_type: str,
+async def update(component: components.Component, paths: paths.Paths, release_type: str,
                  callback: Optional[Callable] = None):
     if callback is None:
         def callback(**kwargs):
@@ -242,7 +137,7 @@ async def update(component: Component, paths: paths.Paths, release_type: str,
         await start(component)
 
         current, latest = get_versions(component, release_type)
-        callback(message=f'Current version: {current.name}\nLatest {release_type}: {latest.name}')
+        callback(message=f'Current version: {current}\nLatest {release_type}: {latest}')
 
         if current == latest:
             callback(message='Already up to date.', progress=100)
@@ -298,8 +193,8 @@ async def update(component: Component, paths: paths.Paths, release_type: str,
             @utils.wrap
             def replace(current_path: pathlib.Path, old_path: pathlib.Path, new_path: str):
                 if old_path.exists():
-                    shutil.rmtree(str(old_path))
-                shutil.move(str(current_path), str(old_path))
+                    diff_utils.really_rmtree(str(old_path))
+                diff_utils.really_rename(str(current_path), str(old_path))
                 shutil.move(new_path, str(current_path))
 
             try:
@@ -323,13 +218,13 @@ async def update(component: Component, paths: paths.Paths, release_type: str,
                     logger.info(message)
                     callback(message=message, progress=progress)
                     try:
-                        # with (paths.downloads / target['filepath']).open('rb') as f:
-                        #     patch.apply_patch(temp_dir, f)
-                        await apply(temp_dir, paths.downloads / target['filepath'])
+                        with (paths.downloads / target['filepath']).open('rb') as f:
+                            patch.apply_patch(temp_dir, f)
+                        # await apply(temp_dir, paths.downloads / target['filepath'])
                     except patch.PatchError as e:
                         message = f'Error while applying patch ({e}).'
                         logger.exception(message)
-                        raise Error(message)
+                        raise errors.Error(message)
                     progress += per_action
 
                 current_path = component.path
@@ -341,14 +236,14 @@ async def update(component: Component, paths: paths.Paths, release_type: str,
                         callback(signal=signals.Signal.COMPONENT_IS_RUNNING, data=(component, future))
                         await future
 
-                    message = (f'Replacing {component.name} v{current.name} with {component.name} '
-                               f'v{latest.name}...')
+                    message = (f'Replacing {component.name} v{current} with {component.name} '
+                               f'v{latest}...')
                     logger.info(message)
                     callback(message=message, progress=progress)
                     await replace(current_path, old_version_path, temp_dir)
                 else:
-                    message = (f'Registering action to replace {component.name} v{current.name} with '
-                               f'{component.name} v{latest.name}...')
+                    message = (f'Registering action to replace {component.name} v{current} with '
+                               f'{component.name} v{latest}...')
                     logger.info(message)
                     callback(message=message, progress=progress)
 
@@ -362,7 +257,7 @@ async def update(component: Component, paths: paths.Paths, release_type: str,
             except exceptions.UnknownTargetError as e:
                 logger.error(f'Update failed, {e}')
                 callback(message=f'Update failed, error:\n{e}', error=True)
-            except Error as e:
+            except errors.Error as e:
                 logger.error(f'Update failed, {e}')
                 callback(message=f'Update failed, error:\n{e}', error=True)
             except Exception as e:
@@ -382,7 +277,6 @@ def parse_args():
     parser.add_argument('--component', default='labbie')
     parser.add_argument('--prerelease', action='store_true')
     parser.add_argument('--data-dir', type=utils.resolve_path, default=None)
-    parser.add_argument('--current-version', default=None)
     args = parser.parse_args()
     if args.action is None:
         args.action = 'update'
@@ -396,26 +290,9 @@ def main():
     else:
         logger.add(utils.root_dir() / 'logs' / 'updater.log', mode='w', encoding='utf8')
 
-    constants_ = constants.Constants.load()
-    paths = utils.get_paths(data_dir=constants_.data_dir)
+    paths = utils.get_paths(data_dir=constants.CONSTANTS.data_dir)
 
-    components = {
-        'labbie': Component(
-            'Labbie',
-            path=utils.built_labbie_dir(),
-            version_history_url='https://labbie.blob.core.windows.net/releases/components/labbie/version_history.json',
-            repository_url='https://labbie.blob.core.windows.net/releases',
-            version_name=args.current_version or utils.get_labbie_version()
-        ),
-        'updater': Component(
-            'Updater',
-            path=utils.built_updater_dir(),
-            version_history_url='https://labbie.blob.core.windows.net/releases/components/updater/version_history.json',
-            repository_url='https://labbie.blob.core.windows.net/releases',
-            version_name=version.__version__,
-            replace_after_exit=True
-        )
-    }
+    valid_components = components.COMPONENTS
 
     def labbie_is_running():
         return ipc.is_running()
@@ -427,9 +304,9 @@ def main():
             future.set_result(None)
         asyncio.create_task(task())
 
-    components['labbie'].set_running_handlers(labbie_is_running, labbie_close_and_continue)
+    valid_components['labbie'].set_running_handlers(labbie_is_running, labbie_close_and_continue)
 
-    component = components[args.component]
+    component = valid_components[args.component]
     release_type = 'prerelease' if args.prerelease else 'release'
 
     if args.action == 'check':
@@ -467,8 +344,6 @@ def main():
     asyncio.set_event_loop(loop)
 
     with loop:
-        # import logging
-        # logging.getLogger("asyncio").setLevel(logging.ERROR)
         if args.action == 'update':
             update_task = loop.create_task(update(component, paths, release_type, callback))
             window.set_task(update_task)

@@ -3,7 +3,6 @@ import functools
 import pathlib
 import subprocess
 import sys
-import tempfile
 from typing import Union
 
 import loguru
@@ -11,10 +10,11 @@ import loguru
 from updater import paths
 
 logger = loguru.logger
+_FROZEN = getattr(sys, 'frozen', False)
 
 
 def root_dir():
-    if getattr(sys, '_really_frozen', False):
+    if is_frozen():
         # root/bin/updater/Updater.exe
         return pathlib.Path(sys.executable).parent.parent.parent.resolve()
     else:
@@ -23,7 +23,7 @@ def root_dir():
 
 
 def updater_dir():
-    if getattr(sys, '_really_frozen', False):
+    if is_frozen():
         # .../updater/Updater.exe
         return pathlib.Path(sys.executable).parent.resolve()
     else:
@@ -36,14 +36,14 @@ def assets_dir():
 
 
 def built_labbie_dir():
-    if getattr(sys, '_really_frozen', False):
+    if is_frozen():
         return root_dir() / 'bin' / 'labbie'
     else:
         return root_dir() / 'package' / 'build' / 'Labbie' / 'bin' / 'labbie'
 
 
 def built_updater_dir():
-    if getattr(sys, '_really_frozen', False):
+    if is_frozen():
         return root_dir() / 'bin' / 'updater'
     else:
         return root_dir() / 'package' / 'build' / 'Labbie' / 'bin' / 'updater'
@@ -51,16 +51,17 @@ def built_updater_dir():
 
 def update_path():
     sys.path.append(str(built_labbie_dir() / 'lib'))
-    if getattr(sys, '_really_frozen', False):
+    if is_frozen():
         sys.path.append(str(root_dir() / 'lib'))
 
 
-def fake_freeze():
-    # Act as if we're frozen all the time, for the purposes of python code like the labbie package
-    # but maintain true frozen state to use internally
-    really_frozen = getattr(sys, 'frozen', False)
-    sys.frozen = True
-    sys._really_frozen = really_frozen
+def freeze_others():
+    from labbie import utils as labbie_utils
+    labbie_utils._FROZEN = True
+
+
+def is_frozen():
+    return _FROZEN
 
 
 def get_paths(data_dir: pathlib.Path = None):

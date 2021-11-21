@@ -2,7 +2,7 @@ import dataclasses
 import functools
 import os
 import pathlib
-from typing import ClassVar, Union
+from typing import ClassVar, Union, TypeVar, Type
 
 import dacite
 import loguru
@@ -16,12 +16,13 @@ logger = loguru.logger
 _DEFAULT_DATA_DIR = utils.default_data_dir()
 _DEFAULT_CONFIG_DIR = utils.default_config_dir()
 _MISSING = object()
+C = TypeVar('C')
 
 
 @dataclasses.dataclass(frozen=True)
 class BaseConstants(mixins.SerializableMixin):
     @classmethod
-    def load(cls, _constants_path: Union[None, str, pathlib.Path] = _MISSING, **kwargs):
+    def load(cls: Type[C], _constants_path: Union[None, str, pathlib.Path] = _MISSING, **kwargs) -> C:
         """Load constants.
 
         There are three potential sources for constant values, in order of their preference
