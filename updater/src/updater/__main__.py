@@ -229,7 +229,7 @@ async def update(component: components.Component, paths: paths.Paths, release_ty
 
                 current_path = component.path
                 old_version_path = component.path.with_name(
-                    f'{component.name.lower()} {component.version.name}')
+                    f'{component.name.lower()} {component.version}')
                 if not component.replace_after_exit:
                     if component.is_running():
                         future = asyncio.Future()
@@ -255,10 +255,10 @@ async def update(component: components.Component, paths: paths.Paths, release_ty
                 callback(message='Done.', progress=progress)
 
             except exceptions.UnknownTargetError as e:
-                logger.error(f'Update failed, {e}')
+                logger.exception('Update failed')
                 callback(message=f'Update failed, error:\n{e}', error=True)
             except errors.Error as e:
-                logger.error(f'Update failed, {e}')
+                logger.exception('Update failed')
                 callback(message=f'Update failed, error:\n{e}', error=True)
             except Exception as e:
                 logger.exception('Unknown error')
@@ -301,6 +301,9 @@ def main():
         async def task():
             ipc.signal_exit()
             await ipc.wait_for_exit_async()
+            # TODO(bnorick): this arbitrary sleep seems uneeded, just figure out what exception to handle in
+            # the filesystem manipulation, but I am too tired
+            await asyncio.sleep(0.5)
             future.set_result(None)
         asyncio.create_task(task())
 
@@ -313,7 +316,7 @@ def main():
         component.load()
         current, latest = get_versions(component, release_type)
         if current != latest:
-            print(latest.name, end='')
+            print(str(latest), end='')
         sys.exit()
 
     app = QtWidgets.QApplication(sys.argv)

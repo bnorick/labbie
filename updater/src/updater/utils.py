@@ -18,8 +18,11 @@ def root_dir():
         # root/bin/updater/Updater.exe
         return pathlib.Path(sys.executable).parent.parent.parent.resolve()
     else:
-        # root/updater/src/updater/utils.py
-        return pathlib.Path(__file__).parent.parent.parent.parent.resolve()
+        # When running from python, not frozen, we consider the build directory to be the root
+        # repo/updater/src/updater/utils.py
+        # repo/package/build/Labbie (root)
+        repo_dir = pathlib.Path(__file__).parent.parent.parent.parent
+        return (repo_dir / 'package' / 'build' / 'Labbie').resolve()
 
 
 def updater_dir():
@@ -36,17 +39,11 @@ def assets_dir():
 
 
 def built_labbie_dir():
-    if is_frozen():
-        return root_dir() / 'bin' / 'labbie'
-    else:
-        return root_dir() / 'package' / 'build' / 'Labbie' / 'bin' / 'labbie'
+    return root_dir() / 'bin' / 'labbie'
 
 
 def built_updater_dir():
-    if is_frozen():
-        return root_dir() / 'bin' / 'updater'
-    else:
-        return root_dir() / 'package' / 'build' / 'Labbie' / 'bin' / 'updater'
+    return root_dir() / 'bin' / 'updater'
 
 
 def update_path():

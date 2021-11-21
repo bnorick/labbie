@@ -518,7 +518,6 @@ def really_rename(source,target):
             try:
                 os.rename(source,target)
             except WindowsError as e:
-                print(e.errno)
                 if e.errno not in (errno.EACCES, ):
                     raise
                 time.sleep(0.01)

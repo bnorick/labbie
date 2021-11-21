@@ -36,7 +36,7 @@ def package_labbie():
 
     setup_kwargs = {
         'name': 'Labbie',
-        'version': version.__version__,
+        'version': '.'.join(str(v) for i, v in enumerate(version.to_tuple(version.__version__)) if i != 3),
         'author': 'Brandon Norick',
         'author_email': 'b.norick@gmail.com',
         'package_dir': package_dir,
@@ -45,6 +45,7 @@ def package_labbie():
         'options': {
             'build_exe': {
                 'build_exe': str(labbie_build_dir),
+                'excludes': ['tkinter', 'test'],
                 'include_files': [str(labbie_dir / 'assets'), str(labbie_dir / 'LICENSE')]
             }
         },

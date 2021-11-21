@@ -1,3 +1,4 @@
+from typing import Tuple, Union
 from qtpy import QtCore
 from qtpy import QtGui
 from qtpy import QtWidgets
@@ -6,6 +7,18 @@ from updater import utils
 from updater.vendor.qtmodern import windows
 
 Qt = QtCore.Qt
+
+
+# TODO(bnorick): extract this for use in updater and labbie
+def recolored_icon(asset, rgb: Union[int, Tuple[int, int, int]]):
+    img = QtGui.QPixmap(str(utils.assets_dir() / asset))
+    qp = QtGui.QPainter(img)
+    qp.setCompositionMode(QtGui.QPainter.CompositionMode_SourceIn)
+    if isinstance(rgb, int):
+        rgb = (rgb, rgb, rgb)
+    qp.fillRect(img.rect(), QtGui.QColor.fromRgb(*rgb))
+    qp.end()
+    return QtGui.QIcon(img)
 
 
 class UpdateWindow(windows.ModernWindow):
@@ -66,10 +79,10 @@ class UpdateWindow(windows.ModernWindow):
         msgbox_close = windows.ModernMessageBox()
         msgbox_close.setWindowTitle('Action Required')
         msgbox_close.setIconPixmap(
-            QtGui.QIcon(str(utils.assets_dir() / 'close.svg')).pixmap(QtCore.QSize(35, 35)))
+            recolored_icon('close.svg', rgb=180).pixmap(QtCore.QSize(35, 35)))
         msgbox_close.setStandardButtons(QtWidgets.QMessageBox.NoButton)
-        msgbox_btn_close = msgbox_close.addButton('Close', QtWidgets.QMessageBox.DestructiveRole)
-        msgbox_btn_cancel = msgbox_close.addButton('Cancel Update', QtWidgets.QMessageBox.RejectRole)
+        msgbox_btn_close = msgbox_close.addButton('Close Labbie', QtWidgets.QMessageBox.DestructiveRole)
+        msgbox_btn_cancel = msgbox_close.addButton('Cancel', QtWidgets.QMessageBox.RejectRole)
         msgbox_close.setEscapeButton(msgbox_btn_cancel)
         msgbox_close.setText(f'{component.name} is currently running and must be closed to continue.')
 
