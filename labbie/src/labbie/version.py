@@ -1,6 +1,6 @@
 from typing import Tuple
 
-__version__ = '0.7.0-alpha.3'
+__version__ = '0.7.0-alpha.4'
 
 _PRERELEASE_TYPE_VALUE = {
     None: 1000,
