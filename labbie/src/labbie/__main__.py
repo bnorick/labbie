@@ -50,8 +50,6 @@ def main():
     ipc.initialize(force=args.force)
 
     log_path = utils.logs_dir() / 'current_run.log'
-    logger.info(f'Switching logging to file: {log_path}')
-    logger.remove()
     if log_path.is_file():
         prev_log_path = log_path.with_name('prev_run.log')
         # delete prev log if it exists
@@ -113,6 +111,9 @@ async def start(log_filter):
     constants.screenshots_dir.mkdir(parents=True, exist_ok=True)
     (constants.helm_enchants_dir / 'league').mkdir(parents=True, exist_ok=True)
     (constants.helm_enchants_dir / 'daily').mkdir(parents=True, exist_ok=True)
+
+    if not constants.debug:
+        logger.remove()
 
     config = injector.get(_Config)
 

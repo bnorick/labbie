@@ -34,7 +34,7 @@ class TabBar(QtWidgets.QTabBar):
         QtWidgets.QTabBar.mouseReleaseEvent(self, mouseEvent)
 
 
-class SearchWidget(base.BaseWidget):
+class MainWidget(base.BaseWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -101,7 +101,7 @@ class SearchWidget(base.BaseWidget):
         layout.addWidget(self.tabs)
         self.setLayout(layout)
 
-        self.setWindowTitle('Search Enchants')
+        self.setWindowTitle('Labbie')
         utils.register_exit_handler(self._at_exit)
 
     def on_tab_middle_click(self, index):

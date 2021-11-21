@@ -11,14 +11,14 @@ from labbie import mods
 from labbie import state
 from labbie import result as search_result
 from labbie.ui.app import presenter as app
-from labbie.ui.search.widget import view
+from labbie.ui.main.widget import view
 from labbie.ui.result.widget import presenter as result
 
 logger = loguru.logger
 _POSITION_FILE = 'position.txt'
 
 
-class SearchPresenter:
+class MainPresenter:
 
     @injector.inject
     def __init__(
@@ -28,7 +28,7 @@ class SearchPresenter:
         app_presenter: app.AppPresenter,
         bases_: bases.Bases,
         mods_: mods.Mods,
-        view: view.SearchWidget,
+        view: view.MainWidget,
         result_builder: injector.AssistedBuilder[result.ResultWidgetPresenter]
     ):
         self._constants = constants_

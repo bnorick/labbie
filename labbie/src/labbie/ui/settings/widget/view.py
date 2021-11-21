@@ -21,10 +21,17 @@ class SettingsWidget(base.BaseWidget):
         lbl_daily = QtWidgets.QLabel('Daily', self)
         self.switch_daily = switch.Switch(self, thumb_radius=8, track_radius=5)
 
+        group_ui = QtWidgets.QGroupBox('User Interface', self)
+        lbl_show_on_taskbar = QtWidgets.QLabel('Show on taskbar', self)
+        self.switch_show_on_taskbar = switch.Switch(self, thumb_radius=8, track_radius=5)
+
         group_screen_capture = QtWidgets.QGroupBox('Screen Capture', self)
 
         lbl_hotkey = QtWidgets.QLabel('Hotkey', self)
         self.edit_hotkey = QtWidgets.QLineEdit(self)
+
+        lbl_clear = QtWidgets.QLabel('Clear previous results', self)
+        self.switch_clear = switch.Switch(self, thumb_radius=8, track_radius=5)
 
         group_bounds = QtWidgets.QGroupBox('Capture Bounds', self)
         lbl_bounds_left = QtWidgets.QLabel('Left', self)
@@ -55,8 +62,15 @@ class SettingsWidget(base.BaseWidget):
         layout_builds.addStretch(1)
         group_builds.setLayout(layout_builds)
 
-        lbl_clear = QtWidgets.QLabel('Clear previous results', self)
-        self.switch_clear = switch.Switch(self, thumb_radius=8, track_radius=5)
+
+        layout_ui_settings = QtWidgets.QGridLayout()
+        layout_ui_settings.addWidget(lbl_show_on_taskbar, 0, 0)
+        layout_ui_settings.addWidget(self.switch_show_on_taskbar, 0, 1)
+
+        layout_ui = QtWidgets.QHBoxLayout()
+        layout_ui.addLayout(layout_ui_settings)
+        layout_ui.addStretch(1)
+        group_ui.setLayout(layout_ui)
 
         layout_capture_general = QtWidgets.QGridLayout()
         layout_capture_general.addWidget(lbl_hotkey, 0, 0)
@@ -106,6 +120,7 @@ class SettingsWidget(base.BaseWidget):
 
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(group_builds)
+        layout.addWidget(group_ui)
         layout.addWidget(group_screen_capture)
         layout.addLayout(layout_actions)
         self.setLayout(layout)
@@ -136,12 +151,16 @@ class SettingsWidget(base.BaseWidget):
         return self.switch_daily
 
     @utils.checkbox_property
-    def clear_previous(self):
-        return self.switch_clear
+    def show_on_taskbar(self):
+        return self.switch_show_on_taskbar
 
     @utils.text_property
     def hotkey(self):
         return self.edit_hotkey
+
+    @utils.checkbox_property
+    def clear_previous(self):
+        return self.switch_clear
 
     @utils.text_property
     def left(self):

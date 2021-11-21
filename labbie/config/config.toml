@@ -3,6 +3,7 @@ daily = true
 
 [ui]
     hotkeys = { ocr = '' }
+    show_on_taskbar = true
 
 [ocr]
     clear_previous = true

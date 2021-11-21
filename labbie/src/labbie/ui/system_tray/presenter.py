@@ -33,7 +33,7 @@ class SystemTrayIconPresenter:
             pass
 
     def on_search_triggered(self):
-        self._app_presenter.show(keys.SearchWindowKey())
+        self._app_presenter.show(keys.MainWindowKey())
 
     def on_settings_triggered(self):
         self._app_presenter.show(keys.SettingsWindowKey())

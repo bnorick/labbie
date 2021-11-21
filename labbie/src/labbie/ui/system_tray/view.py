@@ -17,7 +17,7 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
         self.setIcon(QtGui.QIcon(str(icon_path)))
         self.menu = QtWidgets.QMenu()
 
-        self.action_search = self.menu.addAction('Search')
+        self.action_search = self.menu.addAction('Open')
         self.action_settings = self.menu.addAction('Settings')
         self.action_about = self.menu.addAction('About')
         action_exit = self.menu.addAction('Exit')

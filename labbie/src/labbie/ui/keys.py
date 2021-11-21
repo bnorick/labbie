@@ -9,7 +9,7 @@ import injector
 from labbie import result
 from labbie.ui.about.window import presenter as about
 from labbie.ui.system_tray import presenter as system_tray
-from labbie.ui.search.window import presenter as search
+from labbie.ui.main.window import presenter as search
 from labbie.ui.settings.window import presenter as settings
 from labbie.ui.error.window import presenter as error
 
@@ -54,15 +54,15 @@ class SystemTrayIconKey(_Key):
 
 
 @dataclasses.dataclass(frozen=True)
-class SearchWindowKey(_PopulatableKey):
+class MainWindowKey(_PopulatableKey):
     DELETE_WHEN_CLOSED: ClassVar[bool] = False
     results: Union[None, result.Result, List[result.Result]] = dataclasses.field(default=None, compare=False)
     clear: bool = dataclasses.field(default=False, compare=False)
 
     def get_presenter(self, injector: injector.Injector):
-        return injector.get(search.SearchWindowPresenter)
+        return injector.get(search.MainWindowPresenter)
 
-    def _populate_presenter(self, presenter: search.SearchWindowPresenter):
+    def _populate_presenter(self, presenter: search.MainWindowPresenter):
         presenter.populate_view(self.results, clear=self.clear)
 
 

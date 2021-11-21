@@ -47,8 +47,9 @@ class OcrConfig(mixins.SerializableMixin):
 
 
 @dataclasses.dataclass
-class UiConfig(mixins.SerializableMixin):
+class UiConfig(mixins.ObservableMixin, mixins.SerializableMixin):
     hotkeys: HotkeysConfig = HotkeysConfig()
+    show_on_taskbar: bool = True
 
 
 @dataclasses.dataclass

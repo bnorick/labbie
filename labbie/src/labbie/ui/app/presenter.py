@@ -55,7 +55,7 @@ class AppPresenter:
         self.screen_capture()
 
     def reset_window_positions(self):
-        key = keys.SearchWindowKey()
+        key = keys.MainWindowKey()
         if presenter := self.presenters.get(key):
             presenter.reset_position()
 
@@ -96,10 +96,10 @@ class AppPresenter:
                 results.append(result)
 
         if results:
-            key = keys.SearchWindowKey(results, clear=self._config.ocr.clear_previous)
+            key = keys.MainWindowKey(results, clear=self._config.ocr.clear_previous)
             self.show(key)
         else:
-            key = keys.SearchWindowKey()
+            key = keys.MainWindowKey()
             self.toggle(key)
 
     def show(self, key: 'keys._Key'):
@@ -133,10 +133,10 @@ class AppPresenter:
 
     def launch(self):
         self.show(keys.SystemTrayIconKey())
-        self.show(keys.SearchWindowKey())
+        self.show(keys.MainWindowKey())
 
     def foreground(self):
-        self.show(keys.SearchWindowKey())
+        self.show(keys.MainWindowKey())
 
     def shutdown(self):
         self.presenters[keys.SystemTrayIconKey()].exit()

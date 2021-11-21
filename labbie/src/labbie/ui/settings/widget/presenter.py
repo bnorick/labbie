@@ -42,8 +42,9 @@ class SettingsPresenter:
 
         self._view.league = self._config.league
         self._view.daily = self._config.daily
-        self._view.clear_previous = self._config.ocr.clear_previous
+        self._view.show_on_taskbar = self._config.ui.show_on_taskbar
         self._view.hotkey = self._config.ui.hotkeys.ocr
+        self._view.clear_previous = self._config.ocr.clear_previous
         self._view.left = str(self._config.ocr.bounds.left)
         self._view.top = str(self._config.ocr.bounds.top)
         self._view.right = str(self._config.ocr.bounds.right)
@@ -114,6 +115,12 @@ class SettingsPresenter:
                 asyncio.create_task(self._app_state.daily_enchants.download_or_load(self._constants))
             else:
                 self._app_state.daily_enchants.set_enchants(None, None)
+
+        show_on_taskbar = self._view.show_on_taskbar
+        logger.debug(f'{show_on_taskbar=} {self._config.ui.show_on_taskbar=}')
+        if show_on_taskbar != self._config.ui.show_on_taskbar:
+            self._config.ui.show_on_taskbar = show_on_taskbar
+            self._config.ui.notify(show_on_taskbar=show_on_taskbar)
 
         if self._view.hotkey != self._config.ui.hotkeys.ocr:
             self._config.ui.hotkeys.ocr = self._view.hotkey
