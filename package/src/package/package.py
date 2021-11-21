@@ -152,4 +152,4 @@ def package():
     shutil.move(str(build_dir / 'bin' / 'labbie' / 'lib' / 'PySide2'), build_dir / 'lib')
     shutil.move(str(build_dir / 'bin' / 'labbie' / 'lib' / 'shiboken2'), build_dir / 'lib')
     shutil.copy(root_dir / 'README.md', build_dir / 'README.md')
-    shutil.copytree(root_dir / 'config', build_dir / 'config', dirs_exist_ok=True)
+    shutil.copytree(root_dir / 'labbie' / 'config', build_dir / 'config', dirs_exist_ok=True)

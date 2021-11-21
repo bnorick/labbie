@@ -3,6 +3,7 @@ import contextlib
 import dataclasses
 import os
 import pathlib
+import shutil
 import sys
 
 import loguru
@@ -62,7 +63,10 @@ def bin_dir():
 
 
 def default_config_dir():
-    return root_dir() / 'config'
+    default = root_dir() / 'config'
+    if not is_frozen() and not default.exists():
+        shutil.copytree(labbie_dir() / 'config', default)
+    return default
 
 
 def default_data_dir():
