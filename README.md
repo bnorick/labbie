@@ -28,10 +28,10 @@ The default screen capture configuration is for **1920x1080** fullscreen windowe
 Labbie requires me to host the enchant data myself, which I am doing out of my pocket. If you use the tool and love it, please consider a small donation through [Paypal](https://www.paypal.com/donate?hosted_button_id=4QXG9CPFYF5UJ) or become a patron through [Patreon](https://www.patreon.com/bnorick).
 
 ## License
-For historical reasons, the source code for Labbie is dually licensed under the GPLv3 and MIT licenses. Originally, Labbie was released with PyQt5, which is licensed under the GPLv3 and thus necessitated the use of that license. More recently, Labbie switched to PySide2 and began to offer the MIT license a second licensing option.
+Prior to version 0.7.0, the source code for Labbie was licensed under the GPLv3. Labbie was originally released using PyQt5, which is licensed under the GPLv3 and thus necessitated the use of that license. More recently, Labbie switched to PySide2 and changed licenses to the MIT license.
 
-Other components in this repository, namely the updater and packaging source, is licensed under the MIT license.
+Other components in this repository, namely the updater and packaging source, are licensed under the MIT license.
 
-Several pieces of source code have been used from other open source libraries and the licenses which apply to them are noted inline (or alongside, in the case of qtmodern).
+Several pieces of source code have been used from other open source libraries and the licenses which apply these portions of code are noted inline (or alongside, in the case of qtmodern).
 
 <div>The Labbie icon was made by <a href="https://www.freepik.com" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a>.</div>
