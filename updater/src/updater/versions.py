@@ -24,7 +24,17 @@ class Version:
         return self.version.replace('.', '_')
 
     def __gt__(self, other: 'Version'):
-        if not isinstance(other, Version):
+        if not isinstance(other, (Version, str)):
             return NotImplemented
 
-        return version.to_tuple(self.version) > version.to_tuple(other.version)
+        version_str = other.version if isinstance(other, Version) else other
+
+        return version.to_tuple(self.version) > version.to_tuple(version_str)
+
+    def __lt__(self, other: 'Version'):
+        if not isinstance(other, (Version, str)):
+            return NotImplemented
+
+        version_str = other.version if isinstance(other, Version) else other
+
+        return version.to_tuple(self.version) < version.to_tuple(version_str)

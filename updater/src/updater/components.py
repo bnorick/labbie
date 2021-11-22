@@ -1,7 +1,7 @@
 import dataclasses
 import functools
 import pathlib
-from typing import List, Optional
+from typing import List, Literal, Optional
 
 import loguru
 import requests
@@ -75,11 +75,31 @@ class Component:
     def is_undeployed(self):
         return self.version > self.versions[-1]
 
-    def latest_version(self, type_) -> Optional[_Version]:
-        latest = self.version_history['latest'].get(type_)
+    def latest_typed_version(self, release_type: Literal['release', 'prerelease']) -> Optional[_Version]:
+        """Returns the latest version of a specific release type.
+
+        This never opts for another release type if it is newer."""
+        latest = self.version_history['latest'].get(release_type)
         if latest is None:
             return None
         return self.versions[self._version_str_to_index[latest]]
+
+    def latest_version(self, release_type: Literal['release', 'prerelease']) -> Optional[_Version]:
+        """Returns the latest version for a specific release type.
+
+        If the release type is prerelease and a newer release exists, then the release will be returned."""
+
+        latest_release = self.latest_typed_version('release')
+        latest_prerelease = self.latest_typed_version('prerelease')
+
+        # when a release exists which is newer than the latest prerelease, we ignore prereleases
+        release_newer = latest_prerelease is None or latest_prerelease.index < latest_release.index
+        if release_type == 'prerelease' and release_newer:
+            release_type = 'release'
+
+        latest = latest_release if release_type == 'release' else latest_prerelease
+        logger.info(f'versions: {latest_release=} {latest_prerelease=} {latest=}')
+        return latest
 
     def previous_release(self, version_from: _Version) -> _Version:
         for version in reversed(self.versions[:version_from.index]):

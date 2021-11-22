@@ -53,9 +53,16 @@ class UiConfig(mixins.ObservableMixin, mixins.SerializableMixin):
 
 
 @dataclasses.dataclass
+class UpdatesConfig(mixins.SerializableMixin):
+    auto_update: bool = False
+    install_prereleases: bool = False
+
+
+@dataclasses.dataclass
 class Config(BaseConfig, mixins.SerializableMixin):
     ui: UiConfig = UiConfig()
     ocr: OcrConfig = OcrConfig()
+    updates: UpdatesConfig = UpdatesConfig()
     league: bool = True
     daily: bool = True
 

@@ -1,12 +1,17 @@
+import asyncio
 import atexit
 import contextlib
 import dataclasses
+import functools
 import os
 import pathlib
 import shutil
 import sys
+from typing import Literal, Optional
 
 import loguru
+
+from labbie import version
 
 logger = loguru.logger
 
@@ -26,6 +31,22 @@ def temporary_freeze():
         yield
     finally:
         _FROZEN = orig
+
+
+# The following function is based on one available in aiofiles and is liscensed under the Apache2 license
+# see https://github.com/Tinche/aiofiles/blob/master/src/aiofiles/os.py (source)
+# and https://github.com/Tinche/aiofiles/blob/master/LICENSE (license)
+# modifications:
+#     minor edits to conform to Google Style Guide
+def wrap(func):
+    @functools.wraps(func)
+    async def run(*args, loop=None, executor=None, **kwargs):
+        if loop is None:
+            loop = asyncio.get_event_loop()
+        pfunc = functools.partial(func, *args, **kwargs)
+        return await loop.run_in_executor(executor, pfunc)
+
+    return run
 
 
 def root_dir():
@@ -76,6 +97,14 @@ def default_data_dir():
 def update_path():
     if is_frozen():
         sys.path.append(str(root_dir() / 'lib'))
+        sys.path.append(str(root_dir() / 'bin' / 'updater' / 'lib'))
+    else:
+        import subprocess
+        version_bytes = subprocess.check_output(['poetry', 'env', 'info', '--path'],
+                                                cwd=str(root_dir() / 'updater')).rstrip()
+        updater_env_path = pathlib.Path(version_bytes.decode('utf8'))
+        sys.path.append(str(updater_env_path / 'Lib' / 'site-packages'))
+        sys.path.append(str(root_dir() / 'updater' / 'src'))
 
 
 def relaunch(debug, exit_fn=None):
@@ -97,6 +126,45 @@ def relaunch(debug, exit_fn=None):
         exit_fn()
     else:
         sys.exit(0)
+
+
+def exit_and_launch_updater(prereleases, exit_fn=None):
+    if not is_frozen():
+        os.chdir(root_dir() / 'updater')
+        executable = 'poetry'
+        cmd = ['run', 'updater']
+    else:
+        executable = str(root_dir() / 'bin' / 'updater' / 'Updater.exe')
+        cmd = []
+
+    if prereleases:
+        cmd.append('--prerelease')
+
+    logger.info(f'{cmd=}')
+    atexit.register(os.execv, executable, cmd)
+    if exit_fn:
+        exit_fn()
+    else:
+        sys.exit(0)
+
+
+def _check_for_update(release_type: Literal['release', 'prerelease']) -> Optional[str]:
+    from updater import components
+    from updater import utils
+    component = components.COMPONENTS['labbie']
+    component.load()
+
+    latest = component.latest_version(release_type)
+    if latest is None:
+        return None
+    elif latest > version.__version__ and not utils.should_skip_version(str(latest)):
+        return str(latest)
+    elif not latest.is_prerelease() and component.version.is_prerelease():
+        return str(latest)
+    return None
+
+
+check_for_update = wrap(_check_for_update)
 
 
 def make_slotted_dataclass(cls):

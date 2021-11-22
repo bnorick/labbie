@@ -3,7 +3,7 @@ import functools
 import pathlib
 import subprocess
 import sys
-from typing import Union
+from typing import Optional, Union
 
 import loguru
 
@@ -67,6 +67,28 @@ def get_paths(data_dir: pathlib.Path = None):
 
 def resolve_path(path: Union[str, pathlib.Path]):
     return pathlib.Path(path).resolve()
+
+
+def set_skipped_version(version: str, paths: Optional[paths.Paths] = None):
+    if paths is None:
+        paths = get_paths()
+    logger.debug(paths.updater_data / 'skip.txt')
+    with (paths.updater_data / 'skip.txt').open('w', encoding='utf8') as f:
+        f.write(version)
+
+
+def should_skip_version(version: str, paths: Optional[paths.Paths] = None):
+    if paths is None:
+        paths = get_paths()
+
+    skip_path = (paths.updater_data / 'skip.txt')
+    if not skip_path.exists():
+        return False
+
+    with skip_path.open('r', encoding='utf8') as f:
+        skipped = f.read().rstrip()
+
+    return skipped == version
 
 
 def get_labbie_version():

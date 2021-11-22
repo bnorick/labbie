@@ -19,6 +19,7 @@ from labbie import utils
 from labbie.di import module
 from labbie.ui import utils as ui_utils
 from labbie.ui.app import presenter as app
+from labbie.ui.update import presenter as update
 from labbie.vendor.qtmodern import styles
 
 logger = loguru.logger
@@ -81,7 +82,7 @@ def main():
         sys.exit(loop.run_forever())
 
 
-async def handle_ipc(app_presenter):
+async def handle_ipc(app_presenter: app.AppPresenter):
     # Focuses the app when other instances start
     # Exits the app when other instances signal to exit
 
@@ -97,6 +98,32 @@ async def handle_ipc(app_presenter):
             app_presenter.foreground()
             ipc.foregrounded()
         await asyncio.sleep(0.1)
+
+
+async def check_for_update(config: config.Config, injector: injector.Injector, app_presenter: app.AppPresenter):
+    if not utils.is_frozen():
+        logger.info('Update checks are disabled when application is not frozen')
+        return
+
+    release_type = 'release' if not config.updates.install_prereleases else 'prerelease'
+    update_version = await utils.check_for_update(release_type)
+    if not update_version:
+        logger.info('No update available')
+        return
+
+    logger.info(f'Update available, version={update_version}')
+
+    def exit_fn():
+        app_presenter.shutdown()
+
+    if config.updates.auto_update:
+        utils.exit_and_launch_updater(release_type, exit_fn=exit_fn)
+    else:
+        # TODO(bnorick): convert this to use app_presenter.show
+        update_presenter = injector.get(update.UpdatePresenter)
+        should_update = await update_presenter.should_update(update_version, release_type)
+        if should_update:
+            utils.exit_and_launch_updater(release_type, exit_fn=exit_fn)
 
 
 async def start(log_filter):
@@ -130,6 +157,7 @@ async def start(log_filter):
     app_presenter = injector.get(app.AppPresenter)
     app_presenter.launch()
     asyncio.create_task(handle_ipc(app_presenter))
+    asyncio.create_task(check_for_update(config, injector, app_presenter))
 
 
 if __name__ == '__main__':

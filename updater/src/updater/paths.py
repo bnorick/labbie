@@ -24,8 +24,5 @@ class Paths:
         self.work = self.updater_data / 'work'
 
         if not self.repo.exists():
-            if utils.is_frozen():
-                repo_source = self.root / 'bin' / 'updater' / 'repo'
-            else:
-                repo_source = self.root / 'updater' / 'repo'
+            repo_source = self.root / 'bin' / 'updater' / 'repo'
             shutil.copytree(repo_source, self.repo)

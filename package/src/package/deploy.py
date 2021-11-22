@@ -1,6 +1,7 @@
 import pathlib
 import shutil
 import multiprocessing
+from typing import Optional
 
 import loguru
 import typer
@@ -8,7 +9,6 @@ import typer
 from labbie_admin.updater import updates
 from package import utils
 from updater import components
-from updater import errors
 from updater import patch
 from updater import versions
 
@@ -16,9 +16,9 @@ logger = loguru.logger
 app = typer.Typer()
 
 
-def zip(version: versions.Version):
+def make_zip(version: versions.Version):
     # zip up for upload to github
-    zip_path = utils.build_dir() / f'Labbie_v{version.path_encoded()}.zip'
+    zip_path = utils.build_dir() / f'Labbie_v{version.path_encoded()}'
     shutil.make_archive(str(zip_path), 'zip',  utils.build_dir() / 'Labbie')
 
 
@@ -32,7 +32,8 @@ def make_patches(historical_dir: pathlib.Path, patches_dir: pathlib.Path, compon
 
     version_dir = component_historical_dir / str(version)
     if version_dir.exists():
-        logger.info(f'Version already exists in historical versions: {version_dir}, skipping patch generation')
+        logger.info(f'Version already exists in historical versions: {version_dir}, '
+                    f'skipping patch generation')
         return
 
     if version.is_prerelease():
@@ -56,7 +57,7 @@ def make_patches(historical_dir: pathlib.Path, patches_dir: pathlib.Path, compon
 
 
 @app.command()
-def deploy():
+def deploy(zip: Optional[bool] = None):
     labbie_component = components.COMPONENTS['labbie']
     labbie_component.load()
 
@@ -64,8 +65,8 @@ def deploy():
     updater_component.load()
 
     zip_proc = None
-    if not labbie_component.version.is_prerelease():
-        zip_proc = multiprocessing.Process(target=zip, args=(labbie_component.version, ))
+    if zip is None and not labbie_component.version.is_prerelease() or zip:
+        zip_proc = multiprocessing.Process(target=make_zip, args=(labbie_component.version, ))
         zip_proc.start()
 
     historical_dir = utils.build_dir() / 'historical'
@@ -90,3 +91,6 @@ def deploy():
                 patches.append(patch_file)
 
         updates.add_update(component.name.lower(), str(component.version), patches)
+
+    if zip_proc:
+        zip_proc.join()

@@ -51,16 +51,8 @@ def compatible_prerelease_versions(version_from: versions.Version, version_to: v
 
 def get_versions(component: components.Component, release_type: str) -> Tuple[versions.Version, versions.Version]:
     current = component.version
-    latest_release = component.latest_version('release')
-    latest_prerelease = component.latest_version('prerelease')
-
-    # when a release exists which is newer than the latest prerelease, we ignore prereleases
-    release_newer = latest_prerelease is None or latest_prerelease.index < latest_release.index
-    if release_type == 'prerelease' and release_newer:
-        release_type = 'release'
-
-    latest = latest_release if release_type == 'release' else latest_prerelease
-    logger.info(f'versions: {current=} {latest_release=} {latest_prerelease=} {latest=}')
+    logger.info(f'current version: {current}')
+    latest = component.latest_version(release_type)
     return current, latest
 
 
@@ -141,6 +133,8 @@ async def update(component: components.Component, paths: paths.Paths, release_ty
 
         if current == latest:
             callback(message='Already up to date.', progress=100)
+        elif utils.should_skip_version(latest):
+            callback(message='Version is marked skipped.', progress=100)
         else:
             progress = 0
             callback(message='Preparing to download and apply updates...', progress=progress)

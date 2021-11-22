@@ -11,7 +11,8 @@
 - Convert resources to a package w/ manager.py, mods.py, trade.py, enchants.py, bases.py
 - Make OCR insensitive to c/t using a special character to represent "c or t"
   - This change requires putting the actual enchant strings in the trie as values
-- Setting for "Show in task bar"
+- [X] Setting for "Show in task bar"
+- Make buttons for "Reset Window Positions" and "Check for Updates" not full width
 
 ## Major features
 ### Buy list

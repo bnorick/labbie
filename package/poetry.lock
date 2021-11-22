@@ -600,7 +600,7 @@ pyobjc = {version = "*", markers = "sys_platform == \"darwin\""}
 
 [[package]]
 name = "labbie"
-version = "0.7.0-alpha.1"
+version = "0.7.0-alpha.4"
 description = "Lab enchant assistant"
 category = "main"
 optional = false
@@ -3021,7 +3021,7 @@ name = "pywin32"
 version = "302"
 description = "Python for Window Extensions"
 category = "main"
-optional = true
+optional = false
 python-versions = "*"
 
 [[package]]
@@ -3376,7 +3376,7 @@ deploy = ["labbie_admin"]
 [metadata]
 lock-version = "1.1"
 python-versions = "~3.8"
-content-hash = "27812785012d73908366609f4cfe802c71f89fbcb4f667201d29db0268de0b40"
+content-hash = "959fed9ac13f9c321c254e78cc79effaeaa99a9e2474b5ae506fc6b738ece252"
 
 [metadata.files]
 aiohttp = [
