@@ -3,6 +3,7 @@ import asyncio
 import atexit
 import os
 import sys
+import time
 
 import injector
 import loguru
@@ -58,11 +59,14 @@ def main():
             prev_log_path.unlink()
         except FileNotFoundError:
             pass
-        # move log from last run to prev log
-        try:
-            log_path.rename(prev_log_path)
-        except FileExistsError:
-            pass
+        for _ in range(10):
+            # move log from last run to prev log
+            try:
+                log_path.rename(prev_log_path)
+                break
+            except (FileExistsError, PermissionError) as e:
+                logger.debug(f'Error renaming log: {e}')
+                time.sleep(0.05)
     log_filter = utils.LogFilter('INFO')
     logger.add(log_path, filter=log_filter, rotation="100 MB", retention=1, mode='w', encoding='utf8')
 

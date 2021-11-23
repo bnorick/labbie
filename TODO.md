@@ -1,7 +1,7 @@
 # Labbie
 - Hide search window during ocr if it overlays the search area
-- Automated packaging / version bumping
-- Self update functionality (auto or manual)
+- [X] Automated packaging / version bumping
+- [X] Self update functionality (auto or manual)
 - Scrape / Add boot and belt enchants
 - Splash screen (waits for resources / enchants to be ready)
 - Better 4k support
@@ -13,6 +13,7 @@
   - This change requires putting the actual enchant strings in the trie as values
 - [X] Setting for "Show in task bar"
 - Make buttons for "Reset Window Positions" and "Check for Updates" not full width
+- Make `Config` versioned so that prerelease rollbacks can also rollback config
 
 ## Major features
 ### Buy list
@@ -29,22 +30,14 @@
 
 # Updater
 - Rewrite esky code, it's... dated.
-- Automate patch generation (and then signing and upload)
+- [X] Automate patch generation (and then signing and upload)
 
 
 # Packaging
-- Run component tests
-- If pass, make git tag with `vX.Y.Z` format (or `vX.Y.Z-alpha.P`, `vX.Y.Z-beta.P`, `vX.Y.Z-rc.P` for prereleases) on core version branch
-- Push version branch (e.g., `X.Y.Z`) and tag
-- Run `python -m package`
-- If `release=True`, zip `package/build/Labbie` into `package/build/Labbie_vX_Y_Z.zip`
-  - Manually upload to github and make release
-- For each component,
-  - Move `package/build/Labbie/bin/[COMPONENT_NAME]` to `package/build/historical/[COMPONENT_NAME] X.Y.Z`
-  - Run `python -m updater.patch diff SOURCE TARGET` for each source and target needed
-  - Add patches to `labbie_admin.updater.utils.repo_dir() / 'targets' / component.name`
-- Run `python -m labbie_admin.updater --add-version VERSION --component COMPONENT_NAME`
-  - Also verifies version appropriateness
-  - Adds patches to update repo
-  - Uploads metadata and (new) patches to releases container
-  - Updates `releases/components/COMPONENT_NAME/version_history.json`
+- Better automation
+  - Run component tests
+  - If pass, make git tag with `vX.Y.Z` format (or `vX.Y.Z-alpha.P`, `vX.Y.Z-beta.P`, `vX.Y.Z-rc.P` for prereleases) on core version branch
+  - Push version branch (e.g., `X.Y.Z`) and tag
+  - Run `package.package`
+  - Run `package.deploy`
+- Add some way to un-release, maybe?

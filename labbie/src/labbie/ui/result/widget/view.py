@@ -183,8 +183,6 @@ class ResultWidget(base.BaseWidget):
         if not menu_items:
             return
 
-        self.hide_hints()
-
         menu = QtWidgets.QMenu(self)
         for section, items in menu_items.items():
             menu.addSection(section)
@@ -236,12 +234,28 @@ class ResultWidget(base.BaseWidget):
             icon = QtWidgets.QLabel(widget)
             icon.setPixmap(pixmap)
 
-            label = QtWidgets.QLabel('Right clicking rare bases\nshows additional filtering', widget)
+            label = QtWidgets.QLabel(
+                'Price check multiple bases<br />'
+                'by holding <strong>Ctrl</strong> or <strong>Shift</strong><br />'
+                'during selection.<br /><br />'
+                '<strong>Right click</strong> rare bases to<br />'
+                'show additional filtering.',
+                widget
+            )
+            label.setTextFormat(Qt.RichText)
             label.setStyleSheet('QLabel { color: rgb(37, 37, 37); font-size: 10pt; }')
 
-            layout = QtWidgets.QHBoxLayout()
-            layout.addWidget(icon, 0)
-            layout.addWidget(label)
+            label_dismiss = QtWidgets.QLabel('(click to dismiss)', widget)
+            label_dismiss.setStyleSheet('QLabel { color: rgb(37, 37, 37); font-size: 8pt; }')
+            label_dismiss.setAlignment(Qt.AlignCenter)
+
+            layout_top = QtWidgets.QHBoxLayout()
+            layout_top.addWidget(icon, 0)
+            layout_top.addWidget(label)
+
+            layout = QtWidgets.QVBoxLayout()
+            layout.addLayout(layout_top)
+            layout.addWidget(label_dismiss)
             widget.setLayout(layout)
 
             widget.setMinimumWidth(130)
