@@ -128,15 +128,14 @@ def relaunch(debug, exit_fn=None):
         sys.exit(0)
 
 
-def exit_and_launch_updater(prereleases, exit_fn=None):
+def exit_and_launch_updater(release_type: Literal['release', 'prerelease'], exit_fn=None):
     if not is_frozen():
-        os.chdir(root_dir() / 'updater')
-        executable = 'poetry'
-        cmd = ['run', 'updater']
-    else:
-        executable = str(root_dir() / 'bin' / 'updater' / 'Updater.exe')
-        cmd = []
+        logger.debug('Refusing to launch updater, not frozen.')
+        return
 
+    prereleases = (release_type == 'prerelease')
+    executable = str(root_dir() / 'bin' / 'updater' / 'Updater.exe')
+    cmd = [executable]
     if prereleases:
         cmd.append('--prerelease')
 

@@ -153,3 +153,10 @@ def package():
     shutil.move(str(build_dir / 'bin' / 'labbie' / 'lib' / 'shiboken2'), build_dir / 'lib')
     shutil.copy(root_dir / 'README.md', build_dir / 'README.md')
     shutil.copytree(root_dir / 'labbie' / 'config', build_dir / 'config', dirs_exist_ok=True)
+
+    from labbie import version
+    from updater import versions as version_utils
+    v = version_utils.Version(version=version.__version__, index=None)
+    if v.is_prerelease():
+        with (build_dir / 'config' / 'config.toml').open('w', encoding='utf8') as f:
+            f.write('updates.install_prereleases = true\n')
