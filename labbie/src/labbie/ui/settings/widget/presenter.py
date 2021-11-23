@@ -49,7 +49,7 @@ class SettingsPresenter:
         self._view.league = self._config.league
         self._view.daily = self._config.daily
         self._view.show_on_taskbar = self._config.ui.show_on_taskbar
-        self._view.hotkey = self._config.ui.hotkeys.ocr
+        self._view.hotkey = self._config.ui.hotkeys.ocr or ''
         self._view.clear_previous = self._config.ocr.clear_previous
         self._view.left = str(self._config.ocr.bounds.left)
         self._view.top = str(self._config.ocr.bounds.top)

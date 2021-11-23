@@ -23,7 +23,7 @@ class BaseConfig(mixins.ObservableMixin, abc.ABC):
 
 @dataclasses.dataclass
 class HotkeysConfig(mixins.ObservableMixin, mixins.SerializableMixin):
-    ocr: Optional[str] = '`'
+    ocr: Optional[str] = None
 
     # TODO(bnorick): figure out how to hook notify into ocr changes best, so we don't need to
     # manually notify when we change it (or maybe that's best, who knows)
