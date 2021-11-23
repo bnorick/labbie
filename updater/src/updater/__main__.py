@@ -222,8 +222,7 @@ async def update(component: components.Component, paths: paths.Paths, release_ty
                     progress += per_action
 
                 current_path = component.path
-                old_version_path = component.path.with_name(
-                    f'{component.name.lower()} {component.version}')
+                old_version_path = component.path.with_name(f'{component.name.lower()} {component.version}')
                 if not component.replace_after_exit:
                     if component.is_running():
                         future = asyncio.Future()
@@ -243,7 +242,7 @@ async def update(component: components.Component, paths: paths.Paths, release_ty
 
                     def rename():
                         utils.rename_later(path_from=current_path, path_to=old_version_path, delay=1)
-                        utils.rename_later(path_from=temp_dir, path_to=current_path, delay=2)
+                        utils.rename_later(path_from=pathlib.Path(temp_dir), path_to=current_path, delay=2)
                     atexit.register(rename)
                 progress += 5 + extra
                 callback(message='Done.', progress=progress)
