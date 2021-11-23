@@ -18,6 +18,7 @@ from tuf.client import updater
 
 from labbie import ipc
 from updater import components
+from updater import config
 from updater import constants
 from updater import diff_utils
 from updater import errors
@@ -268,7 +269,9 @@ def parse_args():
     group.add_argument('--update', dest='action', action='store_const', const='update')
     group.add_argument('--check', dest='action', action='store_const', const='check')
     parser.add_argument('--component', default='labbie')
-    parser.add_argument('--prerelease', action='store_true')
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--release', action='store_true')
+    group.add_argument('--prerelease', action='store_true')
     parser.add_argument('--data-dir', type=utils.resolve_path, default=None)
     args = parser.parse_args()
     if args.action is None:
@@ -283,7 +286,7 @@ def main():
     else:
         logger.add(utils.root_dir() / 'logs' / 'updater.log', mode='w', encoding='utf8')
 
-    paths = utils.get_paths(data_dir=constants.CONSTANTS.data_dir)
+    paths = utils.get_paths(data_dir=constants.LABBIE_CONSTANTS.data_dir)
 
     valid_components = components.COMPONENTS
 
@@ -303,7 +306,15 @@ def main():
     valid_components['labbie'].set_running_handlers(labbie_is_running, labbie_close_and_continue)
 
     component = valid_components[args.component]
-    release_type = 'prerelease' if args.prerelease else 'release'
+    if args.prerelease or args.release:
+        release_type = 'prerelease' if args.prerelease else 'release'
+        logger.info(f'Using explicitly set release type: {release_type=}')
+    elif args.component == 'labbie':
+        release_type = 'prerelease' if config.LABBIE_CONFIG.updates.install_prereleases else 'release'
+        logger.info(f'Using release type from Labbie config: {release_type=}')
+    else:
+        release_type = 'release'
+        logger.info(f'Using default release type: {release_type=}')
 
     if args.action == 'check':
         component.load()

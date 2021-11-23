@@ -136,7 +136,7 @@ class Component:
         raise errors.NoSuchRelease
 
 
-paths = utils.get_paths(data_dir=constants.CONSTANTS.data_dir)
+paths = utils.get_paths(data_dir=constants.LABBIE_CONSTANTS.data_dir)
 
 COMPONENTS = {
     'labbie': Component(
