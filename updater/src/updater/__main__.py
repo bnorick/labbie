@@ -320,7 +320,8 @@ def main():
     icon_path = utils.assets_dir() / 'icon.ico'
     app.setWindowIcon(QtGui.QIcon(str(icon_path)))
 
-    window = update_window.UpdateWindow()
+    show_launch_labbie = args.component == 'labbie'
+    window = update_window.UpdateWindow(show_launch_labbie=show_launch_labbie)
     window.show()
 
     def callback(message=None, last=None, error=False, progress=None, signal=None, data=None):

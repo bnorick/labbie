@@ -1,5 +1,7 @@
 import asyncio
+import atexit
 import functools
+import os
 import pathlib
 import subprocess
 import sys
@@ -131,6 +133,17 @@ def fix_taskbar_icon():
     import ctypes
     myappid = 'updater.id'  # arbitrary string
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+
+
+def exit_and_launch_labbie(exit_fn=None):
+    executable = str(built_labbie_dir() / 'Labbie.exe')
+    cmd = [executable]
+    logger.info(f'{cmd=}')
+    atexit.register(os.execv, executable, cmd)
+    if exit_fn:
+        exit_fn()
+    else:
+        sys.exit(0)
 
 
 # The following function is based on one available in aiofiles and is liscensed under the Apache2 license

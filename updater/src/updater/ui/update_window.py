@@ -1,4 +1,5 @@
 from typing import Tuple, Union
+
 from qtpy import QtCore
 from qtpy import QtGui
 from qtpy import QtWidgets
@@ -22,7 +23,7 @@ def recolored_icon(asset, rgb: Union[int, Tuple[int, int, int]]):
 
 
 class UpdateWindow(windows.ModernWindow):
-    def __init__(self, parent=None):
+    def __init__(self, show_launch_labbie: bool, parent=None):
         widget = QtWidgets.QWidget()
         widget.setWindowTitle('Updater')
 
@@ -31,18 +32,23 @@ class UpdateWindow(windows.ModernWindow):
         edit_status = QtWidgets.QTextEdit()
 
         btn_show = QtWidgets.QPushButton('Show More')
+        btn_launch = QtWidgets.QPushButton('Launch Labbie')
         btn_act = QtWidgets.QPushButton('Cancel')
 
         progress_bar.setMinimumWidth(450)
+        btn_launch.setVisible(False)
+
         lbl_status.hide()
         edit_status.hide()
         edit_status.setReadOnly(True)
         btn_show.clicked.connect(self.on_show)
+        btn_launch.clicked.connect(self.on_launch)
         btn_act.clicked.connect(self.on_act)
 
         layout_buttons = QtWidgets.QHBoxLayout()
         layout_buttons.addWidget(btn_show)
         layout_buttons.addStretch(1)
+        layout_buttons.addWidget(btn_launch)
         layout_buttons.addWidget(btn_act)
 
         layout = QtWidgets.QVBoxLayout()
@@ -60,6 +66,7 @@ class UpdateWindow(windows.ModernWindow):
         self.lbl_status = lbl_status
         self.edit_status = edit_status
         self.btn_show = btn_show
+        self.btn_launch = btn_launch
         self.btn_act = btn_act
         self.widget = widget
 
@@ -72,6 +79,7 @@ class UpdateWindow(windows.ModernWindow):
         self.done = False
         self.task = None
         self.messages = 0
+        self._show_launch_labbie = show_launch_labbie
 
         self.center_on_screen()
 
@@ -106,6 +114,8 @@ class UpdateWindow(windows.ModernWindow):
             palette = QtGui.QPalette()
             palette.setColor(QtGui.QPalette.Highlight, QtGui.QColor('red'))
             self.progress_bar.setPalette(palette)
+        elif self._show_launch_labbie:
+            self.btn_launch.show()
         self.btn_act.setText('Exit')
         self.done = True
 
@@ -117,9 +127,14 @@ class UpdateWindow(windows.ModernWindow):
         self.status_shown = show
         self.set_status_visibility(show)
 
+    def on_launch(self):
+        def exit_fn():
+            QtWidgets.QApplication.exit()
+        utils.exit_and_launch_labbie(exit_fn)
+
     def on_act(self):
         if self.done:
-            self.close()
+            QtWidgets.QApplication.exit()
         if self.task:
             self.task.cancel()
         self.on_done(error=True)
