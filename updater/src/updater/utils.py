@@ -121,12 +121,11 @@ def get_labbie_version():
 
 
 def rename_later(path_from, path_to, delay):
-    command = [
-        'cmd',
-        '/c',
-        f'ping 192.0.2.1 -n 1 -w {int(delay * 1000)} & move "{path_from.resolve()}" "{path_to.resolve()}"'
-    ]
-    subprocess.Popen(command, stdout=subprocess.DEVNULL)
+    delayed_move = (f'"ping 192.0.2.1 -n 1 -w {int(delay * 1000)} '
+                    f'& move "{path_from.resolve()}" "{path_to.resolve()}""')
+    command = f'cmd /s /c {delayed_move}'
+    logger.info(f'Renaming later: {path_from=} {path_to=} {command=}')
+    subprocess.Popen(command, stdout=subprocess.DEVNULL, shell=True)
 
 
 def fix_taskbar_icon():
