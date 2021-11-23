@@ -1,0 +1,6 @@
+enchants = ["Enemies in Void Sphere's range take up to 10% increased Damage, based on distance from the Void Sphere",
+            'Raised Zombies deal 40% increased Damage',
+            '40% increased Dual Strike Damage']
+
+
+marks = []

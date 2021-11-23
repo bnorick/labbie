@@ -1,26 +1,52 @@
+import os
 import pathlib
-
+import toml
 from PIL import Image
-import pytesseract
 import pytest
 
-from labbie import ocr
-from labbie import utils
+from typing import List
+from src.labbie import mods
+from src.labbie import ocr
 
-THREE_LINE_EXPECTED = [r'Trigger Commandment of Reflection when Hit', r"Adds 45 to 68 Fire Damage if you've Killed Recently", r"Enemies in Void Sphere's range take up to 10% increased Damage, based on distance from the Void Sphere", r'Raised Zombies deal 40% increased Damage', r'40% increased Dual Strike Damage']
-
-
-@pytest.mark.parametrize(
-    'input_path,expected_enchants',
-    [(r'tests\test_data\three_line_enchant.png', THREE_LINE_EXPECTED),])
-def test_ocr(input_path: pathlib.Path, expected_enchants):
-    image = Image.open(input_path)
-    enchants = ocr.parse_image(image, None, None)
-    assert enchants == expected_enchants
+_MODS = mods.Mods
+_OCR = ocr
+_TEST_FILE_DIR = pathlib.Path('tests/test_data')
+_TEST_FILE_EXPECTED_OUTPUT_NAME = 'expected.toml'
+_TEST_FILE_INPUT_NAME = 'input.png'
 
 
-def test_playground():
-    image_path = r'data\screenshots\2021-11-07_174755\full_processed.png'
-    im_bw = Image.open(image_path)
-    enchants = pytesseract.image_to_string(im_bw, config='--psm 5').replace('\x0c', '')
-    pytest.set_trace()
+def generate_test_samples():
+
+    with os.scandir(_TEST_FILE_DIR) as it:
+        for dir in it:
+            # valid inputs are stored in directories
+            if not dir.is_dir():
+                continue
+            dir_path = pathlib.Path(dir.path)
+            with (dir_path / _TEST_FILE_EXPECTED_OUTPUT_NAME).open() as f:
+                expected_output = toml.load(f)
+
+            marks = [getattr(pytest.mark, mark) for mark in expected_output.get('marks', [])]
+            yield pytest.param(dir_path / _TEST_FILE_INPUT_NAME,
+                               expected_output['enchants'],
+                               dir.name,
+                               marks=marks)
+
+
+@pytest.fixture()
+def mods(injector):
+    return injector.get(_MODS)
+
+
+class TestOCR():
+
+    @pytest.mark.parametrize(
+        'image_path,expected_enchants,test_name',
+        list(generate_test_samples())
+    )
+    def test_ocr(self, image_path: pathlib.Path, expected_enchants: List[str], test_name, mods):
+        image = Image.open(image_path)
+        partial_enchant_list = ocr.parse_image(image, None, None)
+        ocr_output = mods.get_mod_list_from_ocr_results(partial_enchant_list)
+        print(f'{ocr_output=}')
+        assert ocr_output == expected_enchants

@@ -1,0 +1,6 @@
+enchants = [
+"Enduring Cry grants 1 additional Endurance Charge",
+"Flame Wall grants 31 to 47 Added Fire Damage to Projectiles",
+"Frost Bomb has 30% increased Cooldown Recovery Rate"]
+
+marks = []
