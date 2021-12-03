@@ -75,7 +75,7 @@ class Config(BaseConfig, mixins.SerializableMixin):
         return config
 
     @classmethod
-    def load(cls, base_path: pathlib.Path):
+    def load(cls, base_path: pathlib.Path) -> 'Config':
         path = base_path / 'config.toml'
         logger.info(f'Loading config from {path}')
         return cls.from_toml(path)

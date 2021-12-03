@@ -43,7 +43,7 @@ def main():
     args = parse_args()
     if args.version:
         from labbie import version
-        print(version.__version__, end='')
+        print(str(version.VERSION), end='')
         sys.exit()
     elif args.debug:
         os.environ['LABBIE_DEBUG'] = '1'

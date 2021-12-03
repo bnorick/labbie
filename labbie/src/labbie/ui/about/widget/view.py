@@ -1,10 +1,7 @@
-from typing import Tuple, Union
 from qtpy import QtCore
-from qtpy import QtGui
 from qtpy import QtWidgets
 
 from labbie.ui import base
-from labbie.ui import switch
 from labbie.ui import utils
 from labbie import version
 
@@ -25,6 +22,7 @@ _SCRAPES_FORMAT = '''
 </table>
 '''
 
+
 class AboutWidget(base.BaseWidget):
 
     def __init__(self, parent=None):
@@ -33,7 +31,7 @@ class AboutWidget(base.BaseWidget):
 
         lbl_title = QtWidgets.QLabel('Labbie', self)
         lbl_title.setStyleSheet('QLabel{font-size: 12pt; font-weight: bold;}')
-        lbl_version = QtWidgets.QLabel(f'v{version.__version__}', self)
+        lbl_version = QtWidgets.QLabel(str(version.VERSION), self)
         lbl_version.setStyleSheet('QLabel{font-size: 9pt; font-weight: bold;}')
 
         details = ('This tool was born out of a desire to better understand the Lab economy.<br />'
@@ -52,10 +50,10 @@ class AboutWidget(base.BaseWidget):
         self.btn_relaunch = QtWidgets.QPushButton(self)
         self.btn_relaunch.setIconSize(QtCore.QSize(24, 16))
         self.btn_open_data = QtWidgets.QPushButton(
-            utils.recolored_icon('folder_space.svg', 180), 'Open Data', self)
+            utils.icon('folder.svg', color=180, margins=(None, None, 0.5, None)), 'Open Data', self)
         self.btn_open_data.setIconSize(QtCore.QSize(24, 16))
         self.btn_open_logs = QtWidgets.QPushButton(
-            utils.recolored_icon('folder_space.svg', 180), 'Open Logs', self)
+            utils.icon('folder.svg', color=180, margins=(None, None, 0.5, None)), 'Open Logs', self)
         self.btn_open_logs.setIconSize(QtCore.QSize(24, 16))
 
         layout_buttons = QtWidgets.QHBoxLayout()
@@ -78,10 +76,10 @@ class AboutWidget(base.BaseWidget):
 
     def update_relaunch_button(self, to_debug):
         if to_debug:
-            self.btn_relaunch.setIcon(utils.recolored_icon('bug_space.svg', 180))
+            self.btn_relaunch.setIcon(utils.icon('bug.svg', color=180, margins=(None, None, 0.5, None)))
             self.btn_relaunch.setText('Relaunch (Debug)')
         else:
-            self.btn_relaunch.setIcon(utils.recolored_icon('return_space.svg', 180))
+            self.btn_relaunch.setIcon(utils.icon('return.svg', color=180, margins=(None, None, 0.5, None)))
             self.btn_relaunch.setText('Relaunch (Normal)')
 
     def set_scrapes(self, league, daily):

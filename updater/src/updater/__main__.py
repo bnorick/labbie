@@ -116,7 +116,7 @@ def cleanup(paths: paths.Paths):
 
 
 async def update(component: components.Component, paths: paths.Paths, release_type: str,
-                 callback: Optional[Callable] = None):
+                 callback: Optional[Callable] = None, sync: bool = False):
     if callback is None:
         def callback(**kwargs):
             pass
@@ -137,24 +137,46 @@ async def update(component: components.Component, paths: paths.Paths, release_ty
         elif utils.should_skip_version(latest):
             callback(message='Version is marked skipped.', progress=100)
         else:
+
+            def clean(paths):
+                cleanup(paths)
+
+            def copy(component, temp_dir):
+                shutil.copytree(component.path, temp_dir, dirs_exist_ok=True)
+
+            def download(updater, target, destination):
+                updater.download_target(target, destination)
+
+            def apply(source, patch_path: pathlib.Path):
+                with patch_path.open('rb') as f:
+                    patch.apply_patch(source, f)
+
+            def replace(current_path: pathlib.Path, old_path: pathlib.Path, new_path: str):
+                if old_path.exists():
+                    diff_utils.really_rmtree(str(old_path))
+                diff_utils.really_rename(str(current_path), str(old_path))
+                shutil.move(new_path, str(current_path))
+
+            if not sync:
+                clean = utils.wrap(clean)
+                copy = utils.wrap(copy)
+                download = utils.wrap(download)
+                apply = utils.wrap(apply)
+                replace = utils.wrap(replace)
+
             progress = 0
             callback(message='Preparing to download and apply updates...', progress=progress)
-            await utils.wrap(cleanup)(paths)
+            if sync:
+                cleanup(paths)
+            else:
+                await clean(paths)
             progress += 5
 
             repo_dir = paths.repo
             settings.repositories_directory = str(repo_dir.parent)
             logger.info(f'Loading repository from local={repo_dir} remote={component.repository_url}')
 
-            repository_mirrors = {
-                'mirror1': {
-                    'url_prefix': component.repository_url,
-                    'metadata_path': 'metadata',
-                    'targets_path': 'targets'
-                }
-            }
-
-            updater_ = updater.Updater(repo_dir.name, repository_mirrors)
+            updater_ = updater.Updater(repo_dir.name, component.repository_mirrors)
             callback(message='Refreshing patch information...', progress=progress)
             updater_.refresh()
             progress += 2
@@ -172,26 +194,6 @@ async def update(component: components.Component, paths: paths.Paths, release_ty
             per_action = remainder // (total * 2)  # * 2 for download and apply
             extra = remainder - per_action * total * 2
 
-            @utils.wrap
-            def copy(component, temp_dir):
-                shutil.copytree(component.path, temp_dir, dirs_exist_ok=True)
-
-            @utils.wrap
-            def download(updater, target, destination):
-                updater.download_target(target, destination)
-
-            @utils.wrap
-            def apply(source, patch_path: pathlib.Path):
-                with patch_path.open('rb') as f:
-                    patch.apply_patch(source, f)
-
-            @utils.wrap
-            def replace(current_path: pathlib.Path, old_path: pathlib.Path, new_path: str):
-                if old_path.exists():
-                    diff_utils.really_rmtree(str(old_path))
-                diff_utils.really_rename(str(current_path), str(old_path))
-                shutil.move(new_path, str(current_path))
-
             try:
                 targets = [updater_.get_one_valid_targetinfo(t) for t in target_names]
                 updated_targets = updater_.updated_targets(targets, destination_directory)
@@ -199,23 +201,30 @@ async def update(component: components.Component, paths: paths.Paths, release_ty
                 paths.work.mkdir(parents=True, exist_ok=True)
                 temp_dir = tempfile.mkdtemp(dir=paths.work)
                 callback(message='Copying source files...', progress=progress)
-                await copy(component, temp_dir)
+                if sync:
+                    copy(component, temp_dir)
+                else:
+                    await copy(component, temp_dir)
                 progress += 10
 
                 for index, target in enumerate(updated_targets, start=1):
                     message = f'Downloading {target["filepath"]} ({index} / {total})...'
                     callback(message=message, progress=progress)
                     logger.info(message)
-                    await download(updater_, target, destination_directory)
+                    if sync:
+                        download(updater_, target, destination_directory)
+                    else:
+                        await download(updater_, target, destination_directory)
                     progress += per_action
 
                     message = f'Applying {target["filepath"]}...'
                     logger.info(message)
                     callback(message=message, progress=progress)
                     try:
-                        with (paths.downloads / target['filepath']).open('rb') as f:
-                            patch.apply_patch(temp_dir, f)
-                        # await apply(temp_dir, paths.downloads / target['filepath'])
+                        if sync:
+                            apply(temp_dir, paths.downloads / target['filepath'])
+                        else:
+                            await apply(temp_dir, paths.downloads / target['filepath'])
                     except patch.PatchError as e:
                         message = f'Error while applying patch ({e}).'
                         logger.exception(message)
@@ -234,7 +243,10 @@ async def update(component: components.Component, paths: paths.Paths, release_ty
                                f'v{latest}...')
                     logger.info(message)
                     callback(message=message, progress=progress)
-                    await replace(current_path, old_version_path, temp_dir)
+                    if sync:
+                        replace(current_path, old_version_path, temp_dir)
+                    else:
+                        await replace(current_path, old_version_path, temp_dir)
                 else:
                     message = (f'Registering action to replace {component.name} v{current} with '
                                f'{component.name} v{latest}...')

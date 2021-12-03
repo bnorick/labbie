@@ -5,7 +5,7 @@ import os
 import pathlib
 import subprocess
 import sys
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
 import loguru
 
@@ -71,7 +71,10 @@ def resolve_path(path: Union[str, pathlib.Path]):
     return pathlib.Path(path).resolve()
 
 
-def set_skipped_version(version: str, paths: Optional[paths.Paths] = None):
+def set_skipped_version(version: Any, paths: Optional[paths.Paths] = None):
+    if not isinstance(version, str):
+        version = str(version)
+
     if paths is None:
         paths = get_paths()
     logger.debug(paths.updater_data / 'skip.txt')
@@ -91,33 +94,6 @@ def should_skip_version(version: str, paths: Optional[paths.Paths] = None):
         skipped = f.read().rstrip()
 
     return skipped == version
-
-
-def get_labbie_version():
-    # labbie_dir = built_labbie_dir()
-    # if not (labbie_dir / 'Labbie.com').exists():
-    #     raise RuntimeError(f'Missing labbie build at {labbie_dir}')
-    # startupinfo = subprocess.STARTUPINFO()
-    # startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-    # startupinfo.wShowWindow = subprocess.SW_HIDE
-    # stdout_file = tempfile.NamedTemporaryFile(mode='r+', delete=False)
-    # process = subprocess.Popen(
-    #     [str(labbie_dir / 'Labbie.com'), '--version'],
-    #     stdin=subprocess.PIPE,
-    #     stdout=stdout_file,
-    #     stderr=subprocess.PIPE,
-    #     shell=False,
-    #     startupinfo=startupinfo
-    # )
-    # return_code = process.wait()
-    # stdout_file.flush()
-    # stdout_file.seek(0)  # This is required to reset position to the start of the file
-    # version = stdout_file.read()
-    # stdout_file.close()
-
-    # return version
-    from labbie import version
-    return version.__version__
 
 
 def rename_later(path_from, path_to, delay):

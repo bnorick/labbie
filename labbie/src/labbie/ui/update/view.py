@@ -15,6 +15,7 @@ class UpdateMessageBox(windows.ModernMessageBox):
         super().__init__(*args, **kwargs)
         self._dialog.setWindowFlags(self._dialog.windowFlags() | Qt.WindowStaysOnTopHint)
         self.setWindowTitle('Update Available')
+        # TODO(bnorick): add icon back
         # self.setIconPixmap(
         #     ui_utils.recolored_icon('update.svg', rgb=180).pixmap(QtCore.QSize(35, 35)))
 

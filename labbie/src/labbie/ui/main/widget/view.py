@@ -1,5 +1,6 @@
 import atexit
 from typing import Dict, List, Optional
+from labbie.ui.buy_list import widget
 
 from qtpy import QtCore
 from qtpy import QtGui
@@ -9,6 +10,7 @@ from labbie.ui import base
 from labbie.ui import checkable_combo
 from labbie.ui import fuzzy_combo
 from labbie.ui import utils
+from labbie.ui.buy_list.widget import view as buy_list
 
 Qt = QtCore.Qt
 
@@ -39,8 +41,8 @@ class MainWidget(base.BaseWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        self._position_path = None
-        self._position = None
+        # self._position_path = None
+        # self._position = None
 
         lbl_mod = QtWidgets.QLabel('Enchant', self)
         self.combo_mod = fuzzy_combo.FuzzyComboBox(self)
@@ -91,34 +93,66 @@ class MainWidget(base.BaseWidget):
         layout_screen_capture.addWidget(self.btn_all)
         layout_screen_capture.addWidget(self.btn_screen_capture, 1)
 
-        layout = QtWidgets.QVBoxLayout()
-        layout.addLayout(layout_mod_section)
-        layout.addSpacing(10)
-        layout.addLayout(layout_base_section)
-        layout.addSpacing(10)
-        layout.addLayout(layout_screen_capture)
-        layout.addSpacing(10)
-        layout.addWidget(self.tabs)
+        layout_main = QtWidgets.QVBoxLayout()
+        layout_main.addLayout(layout_mod_section)
+        layout_main.addSpacing(10)
+        layout_main.addLayout(layout_base_section)
+        layout_main.addSpacing(10)
+        layout_main.addLayout(layout_screen_capture)
+        layout_main.addSpacing(10)
+        layout_main.addWidget(self.tabs)
+
+        layout = QtWidgets.QHBoxLayout()
+
+        # widget_buy_list = buy_list.BuyListWidget(self)
+        # widget_buy_list.setMinimumWidth(200)
+        # # widget_buy_list.buy_list.setUniformItemSizes(True)
+        # # widget_buy_list.setContentsMargins(0, 0, 50, 0)
+        # # widget_buy_list.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Preferred)
+        # layout.addWidget(widget_buy_list)
+
+        layout.addLayout(layout_main)
+
         self.setLayout(layout)
 
+        # item1 = widget_buy_list.buy_list.item(0)
+        # item2 = widget_buy_list.buy_list.item(1)
+        # widget1 = widget_buy_list.buy_list.itemWidget(item1)
+        # widget2 = widget_buy_list.buy_list.itemWidget(item2)
+        # item1.setBackgroundColor(QtGui.QColor('black'))
+        # widget1.adjustSize()
+        # # widget1.updateGeometry()
+        # print(
+        #     f'\nMAIN WINDOW\n'
+        #     f'{widget_buy_list.sizeHint()=}\n'
+        #     f'{widget_buy_list.size()=}\n\n'
+        #     f'{item1.sizeHint()=}\n'
+        #     f'{widget1.sizeHint()=}\n'
+        #     f'{widget1.rect()=}\n'
+        #     f'{widget1.size()=}\n\n'
+        #     f'{item2.sizeHint()=}\n'
+        #     f'{widget2.sizeHint()=}\n'
+        #     f'{widget2.size()=}\n\n'
+        # )
+
         self.setWindowTitle('Labbie')
-        utils.register_exit_handler(self._at_exit)
+        # utils.register_exit_handler(self._at_exit)
 
     def on_tab_middle_click(self, index):
         self.tabs.removeTab(index)
 
-    def get_position(self):
-        pos = self.mapToGlobal(self.pos())
-        return pos.x(), pos.y()
+    # def get_position(self):
+    #     pos = self.mapToGlobal(self.pos())
+    #     return pos.x(), pos.y()
 
-    def set_position(self, position):
-        if not position:
-            self.center_on_screen(adjust_size=False)
-        else:
-            self.move(*position)
+    # def set_position(self, position):
+    #     if not position:
+    #         self.center_on_screen(adjust_size=False)
+    #     else:
+    #         self.move(*position)
 
-    def set_position_path(self, path):
-        self._position_path = path
+    # def set_position_path(self, path):
+    #     self._position_path = path
 
     def set_search_mod_handler(self, handler):
         self._connect_signal_to_slot(self.btn_search_mod.clicked, handler)
@@ -179,11 +213,11 @@ class MainWidget(base.BaseWidget):
         for _ in range(self.tabs.count()):
             self.tabs.removeTab(0)
 
-    def _at_exit(self):
-        if self._position_path:
-            with self._position_path.open('w', encoding='utf8') as f:
-                x, y = self.get_position()
-                f.write(f'{x} {y}')
+    # def _at_exit(self):
+    #     if self._position_path:
+    #         with self._position_path.open('w', encoding='utf8') as f:
+    #             x, y = self.get_position()
+    #             f.write(f'{x} {y}')
 
     # Properties
     @utils.combo_box_property

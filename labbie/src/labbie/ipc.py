@@ -10,7 +10,7 @@ from labbie import version
 logger = loguru.logger
 
 _SHARED_LIST = None
-_DEFAULT_ENTRIES = [0] + list(version.VERSION_NUMBER) + [False]
+_DEFAULT_ENTRIES = [0] + list(version.VERSION.version_tuple) + [False]
 _CREATED_SHM = False
 # 7 values:
 #    0 -> (int) instance count
@@ -57,15 +57,15 @@ def close_shm():
 def initialize(force=False):
     if is_running():
         running_version = get_running_version()
-        if running_version < version.VERSION_NUMBER or force:
-            logger.info(f'Labbie v{version.from_tuple(running_version)} is already running, communicating '
+        if running_version < version.VERSION.version_tuple or force:
+            logger.info(f'Labbie v{version.VERSION.str_from_tuple(running_version)} is already running, communicating '
                         f'that it should exit.')
             signal_exit()
             wait_for_exit()
             set_running_version()
         else:
             signal_foreground()
-            logger.info(f'Labbie v{version.from_tuple(running_version)} is already running.')
+            logger.info(f'Labbie v{version.VERSION.str_from_tuple(running_version)} is already running.')
             logger.info('Exiting')
             sys.exit()
     else:
@@ -92,7 +92,7 @@ def get_running_version():
 
 def set_running_version():
     shm = get_shm()
-    for index, val in enumerate(version.VERSION_NUMBER, start=_VERSION_START_INDEX):
+    for index, val in enumerate(version.VERSION.version_tuple, start=_VERSION_START_INDEX):
         shm[index] = val
 
 

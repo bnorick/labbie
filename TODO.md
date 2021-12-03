@@ -36,8 +36,16 @@
 # Packaging
 - Better automation
   - Run component tests
-  - If pass, make git tag with `vX.Y.Z` format (or `vX.Y.Z-alpha.P`, `vX.Y.Z-beta.P`, `vX.Y.Z-rc.P` for prereleases) on core version branch
+  - If pass, make git tag with `{component_name}/X.Y.Z` format (or `X.Y.Z-alpha.P`, `X.Y.Z-beta.P`, `X.Y.Z-rc.P` for prereleases) on core version branch
   - Push version branch (e.g., `X.Y.Z`) and tag
-  - Run `package.package`
+  - Run `package.build`
   - Run `package.deploy`
 - Add some way to un-release, maybe?
+
+# Generalize Updater and Packager
+In order to extract the updater and packages and make them more generalized for use in other projects, we need to
+- Support component specification in pyproject.toml under \[tools.skif] or skif.toml (so one doesn't have to distribute pyproject.toml)
+- Remove component spec from updater and dependency on it in packager
+- Separate out GUI from updater
+- Support azure blob or github for packager
+- Bring TUF components from labbie_admin into packager

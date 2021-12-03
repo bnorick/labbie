@@ -11,8 +11,6 @@ from typing import Literal, Optional
 
 import loguru
 
-from labbie import version
-
 logger = loguru.logger
 
 _FROZEN = getattr(sys, 'frozen', False)
@@ -116,6 +114,8 @@ def relaunch(debug, exit_fn=None):
         cmd.append(f'"{sys.argv[0]}"')
     if debug:
         cmd.append('--debug')
+    else:
+        os.environ.pop('LABBIE_DEBUG', None)
     if not is_frozen():
         cmd.insert(0, f'"{sys.executable}"')
 
@@ -148,6 +148,7 @@ def exit_and_launch_updater(release_type: Literal['release', 'prerelease'], exit
 
 
 def _check_for_update(release_type: Literal['release', 'prerelease']) -> Optional[str]:
+    from labbie import version
     from updater import components
     from updater import utils
     component = components.COMPONENTS['labbie']
@@ -156,7 +157,7 @@ def _check_for_update(release_type: Literal['release', 'prerelease']) -> Optiona
     latest = component.latest_version(release_type)
     if latest is None:
         return None
-    elif latest > version.__version__ and not utils.should_skip_version(str(latest)):
+    elif latest > version.VERSION and not utils.should_skip_version(latest):
         return str(latest)
     elif not latest.is_prerelease() and component.version.is_prerelease():
         return str(latest)

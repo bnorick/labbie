@@ -6,9 +6,9 @@ from labbie import constants
 from labbie import version
 from labbie.ui.update import view
 
-_UPDATE_MESSAGE_FORMAT = f'''Current: <strong>v{version.__version__}</strong><br />
-Latest {{release_type}}: <strong>v{{version}}</strong>'''
-_NO_UPDATE_MESSAGE_FORMAT = f'''Current version (<strong>v{version.__version__}</strong>) is <br />
+_UPDATE_MESSAGE_FORMAT = f'''Current: <strong>{version.VERSION}</strong><br />
+Latest {{release_type}}: <strong>{{version}}</strong>'''
+_NO_UPDATE_MESSAGE_FORMAT = f'''Current version (<strong>{version.VERSION}</strong>) is <br />
 the latest {{release_type}}.'''
 
 
@@ -22,10 +22,9 @@ class UpdatePresenter:
     async def should_update(self, version_: str, release_type: str):
         text = _UPDATE_MESSAGE_FORMAT.format(version=version_, release_type=release_type)
 
-
         # When "updating" from prerelease to previous release, we don't show skip
         show_skip = True
-        if version.to_tuple(version_) < version.to_tuple(version.__version__):
+        if version_ < version.VERSION:
             show_skip = False
 
         future = asyncio.Future()

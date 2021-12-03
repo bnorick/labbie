@@ -1,12 +1,18 @@
 import pathlib
-from typing import Tuple, Union
+import time
+from typing import Optional, Tuple, Union
 
+import loguru
+from qtpy import QtCore
 from qtpy import QtGui
 from qtpy import QtWidgets
 
 from labbie import utils
 
-_OBSERVED_ABOUTTOQUIT_SIGNAL = False
+logger = loguru.logger
+# _OBSERVED_ABOUTTOQUIT_SIGNAL = False
+_IGNORE_ABOUTTOQUIT_UNTIL = time.monotonic() + 3
+_MarginType = Union[None, int, float]
 
 
 def asset_path(subpath: Union[str, pathlib.Path]):
@@ -19,30 +25,104 @@ def fix_taskbar_icon():
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
 
-def recolored_icon(asset, rgb: Union[int, Tuple[int, int, int]]):
-    img = QtGui.QPixmap(str(asset_path(asset)))
-    qp = QtGui.QPainter(img)
-    qp.setCompositionMode(QtGui.QPainter.CompositionMode_SourceIn)
-    if isinstance(rgb, int):
-        rgb = (rgb, rgb, rgb)
-    qp.fillRect(img.rect(), QtGui.QColor.fromRgb(*rgb))
+def asset_pixmap(asset, color: Union[None, str, int, Tuple[int, int, int]],
+                 size: Optional[Tuple[int, int]] = None,
+                 margins: Optional[Tuple[_MarginType, _MarginType, _MarginType, _MarginType]] = None):
+    if not isinstance(color, (str, int, tuple, type(None))):
+        raise ValueError(f'Invalid color argument, expected None or a value of type int or tuple but got '
+                         f'type "{type(color).__name__}".')
+
+    pixmap = QtGui.QPixmap(str(asset_path(asset)))
+    if all(arg is None for arg in (color, size, margins)):
+        return pixmap
+
+    if size is None:
+        size = pixmap.size().toTuple()
+    else:
+        if pixmap.size().toTuple() != size:
+            pixmap = pixmap.scaled(*size)
+
+    pixmap_width, pixmap_height = size
+    x, y = 0, 0
+
+    if margins is not None:
+        if isinstance(margins, (int, float)):
+            margins = (margins, margins, margins, margins)
+
+        for margin, direction in zip(margins, ('left', 'top', 'right', 'bottom')):
+            if margin and margin < 0:
+                raise ValueError(f'Invalid {direction} margin, expected a non-negative value but got {margin}.')
+
+        width, height = size
+        left, top, right, bottom = margins
+        if left:
+            if isinstance(left, float):
+                left = round(left * pixmap_width)
+            width += left
+            x += left
+
+        if right:
+            if isinstance(right, float):
+                right = round(right * pixmap_width)
+            width += right
+
+        if top:
+            if isinstance(top, float):
+                top = round(top * pixmap_height)
+            height += top
+            y += top
+
+        if bottom:
+            if isinstance(bottom, float):
+                bottom = round(bottom * pixmap_height)
+            height += bottom
+
+        size = (width, height)
+
+    result_pixmap = QtGui.QPixmap(*size)
+    result_pixmap.fill(QtCore.Qt.transparent)
+    qp = QtGui.QPainter(result_pixmap)
+    qp.drawPixmap(x, y, pixmap)
+    if color:
+        qp.setCompositionMode(QtGui.QPainter.CompositionMode_SourceIn)
+        if isinstance(color, int):
+            color = QtGui.QColor(color, color, color)
+        elif isinstance(color, str):
+            color = QtGui.QColor(color)
+        else:
+            color = QtGui.QColor(*color)
+
+        qp.fillRect(x, y, pixmap_width, pixmap_height, color)
     qp.end()
-    return QtGui.QIcon(img)
+    return result_pixmap
+
+
+def icon(asset, *args, **kwargs):
+    pixmap = asset_pixmap(asset, *args, **kwargs)
+    return QtGui.QIcon(pixmap)
+
 
 # NOTE: hack to work around aboutToQuit firing at app initialization
 def _exit_handler_wrapper(handler):
     def wrapped():
-        global _OBSERVED_ABOUTTOQUIT_SIGNAL
-        if not _OBSERVED_ABOUTTOQUIT_SIGNAL:
-            _OBSERVED_ABOUTTOQUIT_SIGNAL = True
-        else:
+        # global _OBSERVED_ABOUTTOQUIT_SIGNAL
+        # if not _OBSERVED_ABOUTTOQUIT_SIGNAL:
+        #     _OBSERVED_ABOUTTOQUIT_SIGNAL = True
+        #     logger.debug('FIRST OBSERVED ABOUT TO QUIT')
+        # else:
+        #     logger.debug('SUBSEQUENT OBSERVED ABOUT TO QUIT')
+        #     handler()
+        if time.monotonic() > _IGNORE_ABOUTTOQUIT_UNTIL:
             handler()
+        else:
+            logger.debug(f'Ignoring early aboutToQuit')
+
     return wrapped
 
 
 def register_exit_handler(handler):
-    if not _OBSERVED_ABOUTTOQUIT_SIGNAL:
-        handler = _exit_handler_wrapper(handler)
+    # if not _OBSERVED_ABOUTTOQUIT_SIGNAL:
+    handler = _exit_handler_wrapper(handler)
     QtWidgets.QApplication.instance().aboutToQuit.connect(handler)
 
 

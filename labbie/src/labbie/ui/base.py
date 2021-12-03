@@ -73,6 +73,10 @@ class BaseWindow(windows.ModernWindow):
         else:
             self.hide()
 
+    def center_on_screen(self):
+        desktop = QtWidgets.QApplication.instance().desktop()
+        self.move(desktop.screen().rect().center() - self.rect().center())
+
     @staticmethod
     def _connect_signal_to_slot(signal, slot):
         if inspect.iscoroutinefunction(slot):

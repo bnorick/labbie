@@ -2,6 +2,7 @@ import multiprocessing
 import shutil
 
 import cx_Freeze
+from labbie.version import VERSION
 import setuptools
 import typer
 
@@ -36,7 +37,7 @@ def package_labbie():
 
     setup_kwargs = {
         'name': 'Labbie',
-        'version': '.'.join(str(v) for i, v in enumerate(version.to_tuple(version.__version__)) if i != 3),
+        'version': '.'.join(str(v) for i, v in enumerate(version.VERSION.version_tuple) if i != 3),
         'author': 'Brandon Norick',
         'author_email': 'b.norick@gmail.com',
         'package_dir': package_dir,
@@ -155,8 +156,6 @@ def package():
     shutil.copytree(root_dir / 'labbie' / 'config', build_dir / 'config', dirs_exist_ok=True)
 
     from labbie import version
-    from updater import versions as version_utils
-    v = version_utils.Version(version=version.__version__, index=None)
-    if v.is_prerelease():
+    if version.VERSION.is_prerelease():
         with (build_dir / 'config' / 'config.toml').open('w', encoding='utf8') as f:
             f.write('updates.install_prereleases = true\n')

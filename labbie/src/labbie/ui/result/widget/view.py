@@ -6,7 +6,6 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 import injector
 import pyperclip
 from qtpy import QtCore
-from qtpy import QtGui
 from qtpy import QtWidgets
 
 from labbie.ui import base
@@ -230,7 +229,7 @@ class ResultWidget(base.BaseWidget):
         else:
             widget = transparent_window.TransparentWindow(parent=self, close_on_click=True)
 
-            pixmap = utils.recolored_icon('info.svg', 83).pixmap(20, 20)
+            pixmap = utils.icon('info.svg', 83).pixmap(20, 20)
             icon = QtWidgets.QLabel(widget)
             icon.setPixmap(pixmap)
 
@@ -272,7 +271,6 @@ class ResultWidget(base.BaseWidget):
         if self.widget_hint:
             self.widget_hint.close()
             self.widget_hint = None
-
 
     # def _update_selected_stats(self, selected: List[QtWidgets.QListWidgetItem] = None):
     #     if selected is None:
@@ -348,7 +346,8 @@ class ResultWidget(base.BaseWidget):
             self.lbl_daily.setText(_DAILY_FORMAT.format(count))
             self.lbl_daily.show()
 
-        results_league, results_daily = self._build_results(self._league_results, self._daily_results, selection_changed_handler=selection_changed_handler)
+        results_league, results_daily = self._build_results(
+            self._league_results, self._daily_results, selection_changed_handler=selection_changed_handler)
         self._widget_league_results = results_league
         self._widget_daily_results = results_daily
 

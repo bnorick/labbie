@@ -105,7 +105,7 @@ class Constants(BaseConstants):
     debug: bool = False
     data_dir: pathlib.Path = _DEFAULT_DATA_DIR
     config_dir: pathlib.Path = _DEFAULT_CONFIG_DIR
-    user_agent: str = f'Labbie v{version.__version__}'
+    user_agent: str = f'Labbie {version.VERSION}'
     dilate: bool = False
 
     @functools.cached_property

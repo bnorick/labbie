@@ -1,7 +1,7 @@
 import dataclasses
 import functools
 import pathlib
-from typing import List, Literal, Optional
+from typing import Dict, List, Literal, Optional
 
 import loguru
 import requests
@@ -22,7 +22,7 @@ class Component:
     name: str
     path: pathlib.Path
     version_history_url: str
-    repository_url: str
+    repository_mirrors: Dict[str, Dict[str, str]]
     version: _Version = None
     version_str: dataclasses.InitVar[str] = None
     replace_after_exit: bool = False
@@ -138,19 +138,25 @@ class Component:
 
 paths = utils.get_paths(data_dir=constants.LABBIE_CONSTANTS.data_dir)
 
-COMPONENTS = {
+COMPONENTS: Dict[str, Component] = {
     'labbie': Component(
         'Labbie',
         path=utils.built_labbie_dir(),
         version_history_url='https://labbie.blob.core.windows.net/releases/components/labbie/version_history.json',
-        repository_url='https://labbie.blob.core.windows.net/releases',
+        repository_mirrors={
+            'metadata': {'url_prefix': 'https://labbie.blob.core.windows.net/releases', 'metadata_path': 'metadata'},
+            'targets': {'url_prefix': 'https://github.com/bnorick/labbie', 'targets_path': 'releases/download', 'confined_target_dirs': ['labbie']}
+        },
         version_str=labbie_version.__version__
     ),
     'updater': Component(
         'Updater',
         path=utils.built_updater_dir(),
         version_history_url='https://labbie.blob.core.windows.net/releases/components/updater/version_history.json',
-        repository_url='https://labbie.blob.core.windows.net/releases',
+        repository_mirrors={
+            'metadata': {'url_prefix': 'https://labbie.blob.core.windows.net/releases', 'metadata_path': 'metadata'},
+            'targets': {'url_prefix': 'https://github.com/bnorick/labbie', 'targets_path': 'releases/download', 'confined_target_dirs': ['updater']}
+        },
         version_str=version.__version__,
         replace_after_exit=True
     )
