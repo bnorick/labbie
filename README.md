@@ -15,6 +15,9 @@ Additional features, such as enchant statistics, will be coming in the future.
 
 Labbie was written to use on the Windows operating system, so YMMV if you choose to try with other operating systems (and I don't currently have plans to produce releases for other operating systems).
 
+## Installation
+To install Labbie, all you need to do is downloading the latest stable release [here](https://github.com/bnorick/labbie/releases), extracting the archive to any location on your computer and start it by excecuting the "Labbie.exe".
+
 ## Settings
 You can choose whether to show results for league, daily, or both.
 
