@@ -72,8 +72,9 @@ class AppPresenter:
         partial_enchant_list = ocr.read_enchants(self._config.ocr.bounds, save_path)
         curr_enchants = self.mods.get_mod_list_from_ocr_results(partial_enchant_list)
         logger.debug(f'{curr_enchants=}')
-        with (self._constants.logs_dir / 'enchants.jsonl').open('ab') as f:
-            f.write(orjson.dumps(curr_enchants))
+        if curr_enchants:
+            with (self._constants.logs_dir / 'enchants.jsonl').open('ab') as f:
+                f.write(orjson.dumps(curr_enchants))
         results = []
         # TODO: make this work for gloves/boots?
         for index, enchant in enumerate(curr_enchants, start=1):
