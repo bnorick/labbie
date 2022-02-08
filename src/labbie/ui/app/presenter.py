@@ -3,6 +3,7 @@ from typing import Any, Dict
 
 import loguru
 import injector
+import orjson
 
 from labbie import config
 from labbie import constants
@@ -71,6 +72,9 @@ class AppPresenter:
         partial_enchant_list = ocr.read_enchants(self._config.ocr.bounds, save_path)
         curr_enchants = self.mods.get_mod_list_from_ocr_results(partial_enchant_list)
         logger.debug(f'{curr_enchants=}')
+        if curr_enchants:
+            with (self._constants.logs_dir / 'enchants.jsonl').open('ab') as f:
+                f.write(orjson.dumps(curr_enchants))
         results = []
         # TODO: make this work for gloves/boots?
         for index, enchant in enumerate(curr_enchants, start=1):
@@ -95,12 +99,8 @@ class AppPresenter:
                 result = _Result(title=enchant, search=enchant, league_result=league_matches, daily_result=daily_matches, base=False)
                 results.append(result)
 
-        if results:
-            key = keys.SearchWindowKey(results, clear=self._config.ocr.clear_previous)
-            self.show(key)
-        else:
-            key = keys.SearchWindowKey()
-            self.toggle(key)
+        key = keys.SearchWindowKey(results, clear=self._config.ocr.clear_previous)
+        self.show(key)
 
     def show(self, key: 'keys._Key'):
         if not isinstance(key, keys._Key):
