@@ -1,4 +1,5 @@
 import inspect
+import os
 
 import injector
 from qtpy import QtCore
@@ -25,7 +26,10 @@ class ScreenSelectionWidget(QtWidgets.QWidget):
         super().__init__(**kwargs)
         self.__press_pos = None
 
-        self.setWindowFlags(Qt.FramelessWindowHint)
+        window_flags = Qt.FramelessWindowHint
+        if os.name == 'posix':
+            window_flags = window_flags | QtCore.Qt.Tool
+        self.setWindowFlags(window_flags)
         self.setAttribute(Qt.WA_TranslucentBackground)
 
         # self.btn_done = QtWidgets.QPushButton('Done', self)

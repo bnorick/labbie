@@ -1,3 +1,4 @@
+import os
 from qtpy import QtCore
 
 from labbie.ui import base
@@ -8,7 +9,10 @@ class MainWindow(base.BaseWindow):
 
     def __init__(self, widget: search_widget.MainWidget):
         super().__init__(widget=widget)
-        self.setWindowFlags(self.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)
+        flags = self.windowFlags() | QtCore.Qt.WindowStaysOnTopHint
+        if os.name == 'posix':
+            flags = flags | QtCore.Qt.Tool
+        self.setWindowFlags(flags)
 
     def set_taskbar_visibility(self, visible: bool):
         window_was_visible = self.isVisible()
