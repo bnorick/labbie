@@ -1,3 +1,4 @@
+import os
 import pathlib
 from typing import Tuple, Union
 
@@ -16,7 +17,8 @@ def asset_path(subpath: Union[str, pathlib.Path]):
 def fix_taskbar_icon():
     import ctypes
     myappid = 'labbie.0.1.0'  # arbitrary string
-    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+    if os.name == 'nt':
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
 
 def recolored_icon(asset, rgb: Union[int, Tuple[int, int, int]]):

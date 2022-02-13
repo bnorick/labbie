@@ -1,3 +1,4 @@
+import os
 import pathlib
 from typing import List, Optional
 
@@ -16,7 +17,10 @@ _KRANGLES = [
     ('Sammon', 'Summon'),
 ]
 
-pytesseract.pytesseract.tesseract_cmd = str(utils.bin_dir() / 'tesseract' / 'tesseract.exe')
+if os.name == 'nt':
+    pytesseract.pytesseract.tesseract_cmd = str(utils.bin_dir() / 'tesseract' / 'tesseract.exe')
+else:
+    pytesseract.pytesseract.tesseract_cmd = 'tesseract'
 
 
 def read_enchants(bounds_: bounds.Bounds, save_path: Optional[pathlib.Path], dilate: Optional[bool] = False):
