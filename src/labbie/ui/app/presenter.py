@@ -74,7 +74,7 @@ class AppPresenter:
         logger.debug(f'{curr_enchants=}')
         if curr_enchants:
             with (self._constants.logs_dir / 'enchants.jsonl').open('ab') as f:
-                f.write(orjson.dumps(curr_enchants)+b'\n')
+                f.write(orjson.dumps({'timestamp': str(datetime.datetime.utcnow()), 'enchants': curr_enchants})+b'\n')
         results = []
         # TODO: make this work for gloves/boots?
         for index, enchant in enumerate(curr_enchants, start=1):
