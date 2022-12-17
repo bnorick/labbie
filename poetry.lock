@@ -16,7 +16,7 @@ multidict = ">=4.5,<7.0"
 yarl = ">=1.0,<2.0"
 
 [package.extras]
-speedups = ["aiodns", "brotli", "cchardet"]
+speedups = ["Brotli", "aiodns", "cchardet"]
 
 [[package]]
 name = "aiosignal"
@@ -57,10 +57,10 @@ optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
 [package.extras]
-dev = ["coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "six", "mypy", "pytest-mypy-plugins", "zope.interface", "furo", "sphinx", "sphinx-notfound-page", "pre-commit"]
-docs = ["furo", "sphinx", "zope.interface", "sphinx-notfound-page"]
-tests = ["coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "six", "mypy", "pytest-mypy-plugins", "zope.interface"]
-tests_no_zope = ["coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "six", "mypy", "pytest-mypy-plugins"]
+dev = ["coverage[toml] (>=5.0.2)", "furo", "hypothesis", "mypy", "pre-commit", "pympler", "pytest (>=4.3.0)", "pytest-mypy-plugins", "six", "sphinx", "sphinx-notfound-page", "zope.interface"]
+docs = ["furo", "sphinx", "sphinx-notfound-page", "zope.interface"]
+tests = ["coverage[toml] (>=5.0.2)", "hypothesis", "mypy", "pympler", "pytest (>=4.3.0)", "pytest-mypy-plugins", "six", "zope.interface"]
+tests_no_zope = ["coverage[toml] (>=5.0.2)", "hypothesis", "mypy", "pympler", "pytest (>=4.3.0)", "pytest-mypy-plugins", "six"]
 
 [[package]]
 name = "charset-normalizer"
@@ -82,16 +82,25 @@ optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
 [[package]]
-name = "cx-freeze"
-version = "6.8.2"
+name = "cx-Freeze"
+version = "6.13.1"
 description = "Create standalone executables from Python scripts"
 category = "dev"
 optional = false
 python-versions = ">=3.6"
 
 [package.dependencies]
-cx-logging = {version = ">=3.0", markers = "sys_platform == \"win32\""}
-importlib-metadata = ">=4.3.1"
+cx-logging = {version = ">=3.0", markers = "sys_platform == \"win32\" and python_version < \"3.10\""}
+importlib-metadata = {version = ">=4.8.3", markers = "python_version < \"3.10\""}
+lief = {version = ">=0.12.0", markers = "sys_platform == \"win32\""}
+packaging = ">=21.0"
+patchelf = {version = ">=0.12", markers = "sys_platform == \"linux\""}
+setuptools = ">=59.0.1,<66"
+
+[package.extras]
+dev = ["bump2version (>=1.0.1)", "cibuildwheel (>=2.8.1)", "pre-commit (>=2.17.0)", "pylint (>=2.13.0)", "wheel (>=0.36.2)"]
+doc = ["sphinx (>=5.0.1,<5.2.0)", "sphinx-rtd-theme (==1.0.0)"]
+test = ["nose (==1.3.7)", "pygments (>=2.11.2)", "pytest (>=7.0.1)", "pytest-cov (>=3.0.0)", "pytest-mock (>=3.6.1)", "pytest-timeout (>=1.4.2)"]
 
 [[package]]
 name = "cx-logging"
@@ -110,7 +119,7 @@ optional = false
 python-versions = ">=3.6"
 
 [package.extras]
-dev = ["pytest (>=5)", "pytest-cov", "coveralls", "black", "mypy", "pylint"]
+dev = ["black", "coveralls", "mypy", "pylint", "pytest (>=5)", "pytest-cov"]
 
 [[package]]
 name = "datrie"
@@ -151,19 +160,19 @@ python-versions = ">=3.5"
 
 [[package]]
 name = "importlib-metadata"
-version = "4.8.2"
+version = "5.1.0"
 description = "Read metadata from Python packages"
 category = "dev"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.7"
 
 [package.dependencies]
 zipp = ">=0.5"
 
 [package.extras]
-docs = ["sphinx", "jaraco.packaging (>=8.2)", "rst.linker (>=1.9)"]
+docs = ["furo", "jaraco.packaging (>=9)", "jaraco.tidelift (>=1.4)", "rst.linker (>=1.9)", "sphinx (>=3.5)"]
 perf = ["ipython"]
-testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-cov", "pytest-enabler (>=1.0.1)", "packaging", "pep517", "pyfakefs", "flufl.flake8", "pytest-perf (>=0.9.2)", "pytest-black (>=0.3.7)", "pytest-mypy", "importlib-resources (>=1.3)"]
+testing = ["flake8 (<5)", "flufl.flake8", "importlib-resources (>=1.3)", "packaging", "pyfakefs", "pytest (>=6)", "pytest-black (>=0.3.7)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=1.3)", "pytest-flake8", "pytest-mypy (>=0.9.1)", "pytest-perf (>=0.9.2)"]
 
 [[package]]
 name = "injector"
@@ -188,6 +197,14 @@ python-versions = "*"
 pyobjc = {version = "*", markers = "sys_platform == \"darwin\""}
 
 [[package]]
+name = "lief"
+version = "0.12.3"
+description = "Library to instrument executable formats"
+category = "dev"
+optional = false
+python-versions = ">=3.6"
+
+[[package]]
 name = "loguru"
 version = "0.5.3"
 description = "Python logging made (stupidly) simple"
@@ -200,7 +217,7 @@ colorama = {version = ">=0.3.4", markers = "sys_platform == \"win32\""}
 win32-setctime = {version = ">=1.0.0", markers = "sys_platform == \"win32\""}
 
 [package.extras]
-dev = ["codecov (>=2.0.15)", "colorama (>=0.3.4)", "flake8 (>=3.7.7)", "tox (>=3.9.0)", "tox-travis (>=0.12)", "pytest (>=4.6.2)", "pytest-cov (>=2.7.1)", "Sphinx (>=2.2.1)", "sphinx-autobuild (>=0.7.1)", "sphinx-rtd-theme (>=0.4.3)", "black (>=19.10b0)", "isort (>=5.1.1)"]
+dev = ["Sphinx (>=2.2.1)", "black (>=19.10b0)", "codecov (>=2.0.15)", "colorama (>=0.3.4)", "flake8 (>=3.7.7)", "isort (>=5.1.1)", "pytest (>=4.6.2)", "pytest-cov (>=2.7.1)", "sphinx-autobuild (>=0.7.1)", "sphinx-rtd-theme (>=0.4.3)", "tox (>=3.9.0)", "tox-travis (>=0.12)"]
 
 [[package]]
 name = "mccabe"
@@ -263,6 +280,17 @@ python-versions = ">=3.6"
 
 [package.dependencies]
 pyparsing = ">=2.0.2,<3"
+
+[[package]]
+name = "patchelf"
+version = "0.17.0.0"
+description = "A small utility to modify the dynamic linker and RPATH of ELF executables."
+category = "dev"
+optional = false
+python-versions = "*"
+
+[package.extras]
+test = ["importlib-metadata", "pytest"]
 
 [[package]]
 name = "pillow"
@@ -2168,7 +2196,7 @@ py = ">=1.5.0"
 wcwidth = "*"
 
 [package.extras]
-checkqa-mypy = ["mypy (v0.761)"]
+checkqa-mypy = ["mypy (==v0.761)"]
 testing = ["argcomplete", "hypothesis (>=3.56)", "mock", "nose", "requests", "xmlschema"]
 
 [[package]]
@@ -2178,6 +2206,19 @@ description = "Implementation of the PEP 3156 Event-Loop with Qt."
 category = "main"
 optional = false
 python-versions = "~=3.6"
+
+[[package]]
+name = "setuptools"
+version = "65.6.3"
+description = "Easily download, build, install, upgrade, and uninstall Python packages"
+category = "dev"
+optional = false
+python-versions = ">=3.7"
+
+[package.extras]
+docs = ["furo", "jaraco.packaging (>=9)", "jaraco.tidelift (>=1.4)", "pygments-github-lexers (==0.0.5)", "rst.linker (>=1.9)", "sphinx (>=3.5)", "sphinx-favicon", "sphinx-hoverxref (<2)", "sphinx-inline-tabs", "sphinx-notfound-page (==0.8.3)", "sphinx-reredirects", "sphinxcontrib-towncrier"]
+testing = ["build[virtualenv]", "filelock (>=3.4.0)", "flake8 (<5)", "flake8-2020", "ini2toml[lite] (>=0.9)", "jaraco.envs (>=2.2)", "jaraco.path (>=3.2.0)", "pip (>=19.1)", "pip-run (>=8.8)", "pytest (>=6)", "pytest-black (>=0.3.7)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=1.3)", "pytest-flake8", "pytest-mypy (>=0.9.1)", "pytest-perf", "pytest-timeout", "pytest-xdist", "tomli-w (>=1.0.0)", "virtualenv (>=13.0.0)", "wheel"]
+testing-integration = ["build[virtualenv]", "filelock (>=3.4.0)", "jaraco.envs (>=2.2)", "jaraco.path (>=3.2.0)", "pytest", "pytest-enabler", "pytest-xdist", "tomli", "virtualenv (>=13.0.0)", "wheel"]
 
 [[package]]
 name = "toml"
@@ -2212,7 +2253,7 @@ optional = false
 python-versions = ">=3.5"
 
 [package.extras]
-dev = ["pytest (>=4.6.2)", "black (>=19.3b0)"]
+dev = ["black (>=19.3b0)", "pytest (>=4.6.2)"]
 
 [[package]]
 name = "yarl"
@@ -2235,13 +2276,13 @@ optional = false
 python-versions = ">=3.6"
 
 [package.extras]
-docs = ["sphinx", "jaraco.packaging (>=8.2)", "rst.linker (>=1.9)"]
-testing = ["pytest (>=4.6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-cov", "pytest-enabler (>=1.0.1)", "jaraco.itertools", "func-timeout", "pytest-black (>=0.3.7)", "pytest-mypy"]
+docs = ["jaraco.packaging (>=8.2)", "rst.linker (>=1.9)", "sphinx"]
+testing = ["func-timeout", "jaraco.itertools", "pytest (>=4.6)", "pytest-black (>=0.3.7)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=1.0.1)", "pytest-flake8", "pytest-mypy"]
 
 [metadata]
 lock-version = "1.1"
 python-versions = "~3.8"
-content-hash = "469dee15ac35a6ced83fb3b9b4fc3b70a8b45c670448d2c1fa01abdd631f6f29"
+content-hash = "376d8be5c7580f0bf0a34ad30ead20db72a63a2f7e705a5face6a077f35eadc6"
 
 [metadata.files]
 aiohttp = [
@@ -2342,16 +2383,42 @@ colorama = [
     {file = "colorama-0.4.4-py2.py3-none-any.whl", hash = "sha256:9f47eda37229f68eee03b24b9748937c7dc3868f906e8ba69fbcbdd3bc5dc3e2"},
     {file = "colorama-0.4.4.tar.gz", hash = "sha256:5941b2b48a20143d2267e95b1c2a7603ce057ee39fd88e7329b0c292aa16869b"},
 ]
-cx-freeze = [
-    {file = "cx_Freeze-6.8.2-cp36-cp36m-win32.whl", hash = "sha256:055a5fd0c4218c28723104977c4067d3d105e54855a8ebf55dc590cfa8e33cd0"},
-    {file = "cx_Freeze-6.8.2-cp36-cp36m-win_amd64.whl", hash = "sha256:218d4a5d58e9fc0895c1c398f52e7879c3608a644258a34b6407128efbb75c48"},
-    {file = "cx_Freeze-6.8.2-cp37-cp37m-win32.whl", hash = "sha256:38987cd96e52559d32553efa83aaa248373de8bb72cc5987157a6cad99826efe"},
-    {file = "cx_Freeze-6.8.2-cp37-cp37m-win_amd64.whl", hash = "sha256:a3f1e08fec6aa36eb09919475e67de630009ade3273460822ebc02d4d91cb0f6"},
-    {file = "cx_Freeze-6.8.2-cp38-cp38-win32.whl", hash = "sha256:7ac7be3ec6a116beb97fe9a0a2d87a1bbf24f1f414c9a13ebc96508b658a033b"},
-    {file = "cx_Freeze-6.8.2-cp38-cp38-win_amd64.whl", hash = "sha256:ca11404517a99799989ca02bd599ed2b2d9789251ce48c2acbc73e7c22b60269"},
-    {file = "cx_Freeze-6.8.2-cp39-cp39-win32.whl", hash = "sha256:30d155a492bbfebaba904a45f6efc5d75a2c6f8da1e50399b0a71ad0947d02e2"},
-    {file = "cx_Freeze-6.8.2-cp39-cp39-win_amd64.whl", hash = "sha256:e8d5eb93f519aefa01716c628ed1f41552fc9d7ce2da6fd546dc3a06fe45c541"},
-    {file = "cx_Freeze-6.8.2.tar.gz", hash = "sha256:5de019ff7a3911f3ffcbb56d765e7f6876f8fefb0fed7a1f017fb420df8bac7b"},
+cx-Freeze = [
+    {file = "cx_Freeze-6.13.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:d6abf729e796e9d6d8eba7192ef6d98c5cd9764fa9ce767dff49533e84472def"},
+    {file = "cx_Freeze-6.13.1-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:83a684991c3c37d38a75f7804be62d831719ee0cb60b304e12dd5ace2ea939ef"},
+    {file = "cx_Freeze-6.13.1-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:515b3bd89d964c66fb74c5a9caabddb4e53571dbe931ee50cbb9509a3900de89"},
+    {file = "cx_Freeze-6.13.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:8cb5f2271a680272c9861e551913acbaca145693740529e0d0fc4f13809536d6"},
+    {file = "cx_Freeze-6.13.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:954faf882887734c0fc69b7d9db25c2e70c9ce44dc078289379a39fbd2053aa9"},
+    {file = "cx_Freeze-6.13.1-cp310-cp310-win32.whl", hash = "sha256:4bb8af2a76455fe8446df3b7f33fd83502536c4195c7452055fc8bfb31b42598"},
+    {file = "cx_Freeze-6.13.1-cp310-cp310-win_amd64.whl", hash = "sha256:42a036796711906e79380b469f36f2f88ddc0cc965a55369f92f77ff0999db0c"},
+    {file = "cx_Freeze-6.13.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:cd90887ec7a0d3f2384170fbaf2fbe4ff49e0b838473ae6a0932f64974bd3c33"},
+    {file = "cx_Freeze-6.13.1-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:22750aa871be2ab5f82d53df0a96f122eee2f46f22e36fbbb298dcfef77affe9"},
+    {file = "cx_Freeze-6.13.1-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:09e872bffaccc1829a3d4815103ece5bb7896ccaf5b5191d62fe758a359d0def"},
+    {file = "cx_Freeze-6.13.1-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:b2a61f9e76a2c3f724790ae6e786f3efc7c3d5936d031958ea5c2ef05b884d91"},
+    {file = "cx_Freeze-6.13.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:41fbe545c1249a05771352e5689e492af2b265c4f43f95faab9dd8e570f2d2e5"},
+    {file = "cx_Freeze-6.13.1-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:64f08a0cb43fdbe3282bd2810e0b3835e90c568574d720cba79ab7ecaabc935c"},
+    {file = "cx_Freeze-6.13.1-cp36-cp36m-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:a087e3f02acd00219cab0207e5fd9af8980fde6c7e672c3a27c58f8e1cab6d05"},
+    {file = "cx_Freeze-6.13.1-cp36-cp36m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:b802cd5d6959fe5c9283c0a769e9b818fcd6b40aab0599755f1cb27d1378ad03"},
+    {file = "cx_Freeze-6.13.1-cp36-cp36m-win32.whl", hash = "sha256:5cd143d6c7a9d4e7c6a9338856e3c8f0fc4fae6ef00e30d3fd4e49fe054ca5f5"},
+    {file = "cx_Freeze-6.13.1-cp36-cp36m-win_amd64.whl", hash = "sha256:93ae97072b31adfab51eb35f6e3c2e46654eff5bdfe8203538dbe93237ef6bc5"},
+    {file = "cx_Freeze-6.13.1-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:2b311a52b6db09acf30cdeb6bf158db07049b95629d2c2d8a37055d6a99fa8a0"},
+    {file = "cx_Freeze-6.13.1-cp37-cp37m-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:82154171b5c9f89b406723f378c469f3e9af367565d25d8185d5c51532dd5b17"},
+    {file = "cx_Freeze-6.13.1-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:4c65ded67f7e4f842ddf20260496fbc98192352ea1ae6e16827e3f25f0a9c53d"},
+    {file = "cx_Freeze-6.13.1-cp37-cp37m-win32.whl", hash = "sha256:5aa4926be340d8aafaa82ba13c62340308f4df5c4d1220118f43c9b3ff46e585"},
+    {file = "cx_Freeze-6.13.1-cp37-cp37m-win_amd64.whl", hash = "sha256:be9d8acec8104eea794550d4fb61940d68d80936e4aad3d33310ed2e5f2bbac3"},
+    {file = "cx_Freeze-6.13.1-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:0228a18acaf65543da51fbc98a1eaac5025b388af4f5f82c4dc209390b59a8da"},
+    {file = "cx_Freeze-6.13.1-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:198624947984becd5a815008cdbacbdfe89a5b053f282e494bd6449a2094e42d"},
+    {file = "cx_Freeze-6.13.1-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:002e453164cc3b5a467ff0975955d761c9dc9dcdf8b521ea2bd51e01e29d66cf"},
+    {file = "cx_Freeze-6.13.1-cp38-cp38-win32.whl", hash = "sha256:042967f5a6ab5dfb21f633264f1d9211a8db5b2acfa13d0f906bbc693f5e9c61"},
+    {file = "cx_Freeze-6.13.1-cp38-cp38-win_amd64.whl", hash = "sha256:9ec94b8c9fdb262449c64de1fad0bfc41c41140836421a56991d33179ef2bb69"},
+    {file = "cx_Freeze-6.13.1-cp39-cp39-macosx_10_9_universal2.whl", hash = "sha256:f515cadd90d03ac860b8ec6d7e347bb383d5573f4aa9b8b13c17f368ae980e46"},
+    {file = "cx_Freeze-6.13.1-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:5faae7ee72649553ed180a7f48500a85d4aa1ffe015fbc2fc9fee13f360efad3"},
+    {file = "cx_Freeze-6.13.1-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:8cd336f82d21f582092b45c0c88d05a571de9109ad62c381b797b7093374b1d8"},
+    {file = "cx_Freeze-6.13.1-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:b9c1a423c877e42f17aa318577b7c82a4f90802bba27d645fd06bdf08f64392a"},
+    {file = "cx_Freeze-6.13.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:0daf25c745dcd95c05c657279557156890a3f8ca92add1b596d1d82bdc324b79"},
+    {file = "cx_Freeze-6.13.1-cp39-cp39-win32.whl", hash = "sha256:62a4a84e89fe8b1aa3bfec28f19fe4badebd299883d96e8c1dbcbc4319d0ef80"},
+    {file = "cx_Freeze-6.13.1-cp39-cp39-win_amd64.whl", hash = "sha256:65dc8f29a18a2a420483356e86d460b10fd7126072e6fc44d4c4da41bbb8d7ae"},
+    {file = "cx_Freeze-6.13.1.tar.gz", hash = "sha256:f694f54daf292e973d92b14df0a2e9ddbd74206caf32389a5370a7e1e54089a4"},
 ]
 cx-logging = [
     {file = "cx_Logging-3.0-cp36-cp36m-manylinux1_x86_64.whl", hash = "sha256:9fcd297e5c51470521c47eff0f86ba844aeca6be97e13c3e2114ebdf03fa3c96"},
@@ -2482,8 +2549,8 @@ idna = [
     {file = "idna-3.3.tar.gz", hash = "sha256:9d643ff0a55b762d5cdb124b8eaa99c66322e2157b69160bc32796e824360e6d"},
 ]
 importlib-metadata = [
-    {file = "importlib_metadata-4.8.2-py3-none-any.whl", hash = "sha256:53ccfd5c134223e497627b9815d5030edf77d2ed573922f7a0b8f8bb81a1c100"},
-    {file = "importlib_metadata-4.8.2.tar.gz", hash = "sha256:75bdec14c397f528724c1bfd9709d660b33a4d2e77387a3358f20b848bb5e5fb"},
+    {file = "importlib_metadata-5.1.0-py3-none-any.whl", hash = "sha256:d84d17e21670ec07990e1044a99efe8d615d860fd176fc29ef5c306068fda313"},
+    {file = "importlib_metadata-5.1.0.tar.gz", hash = "sha256:d5059f9f1e8e41f80e9c56c2ee58811450c31984dfa625329ffd7c0dad88a73b"},
 ]
 injector = [
     {file = "injector-0.18.4-py2.py3-none-any.whl", hash = "sha256:9e6e7e63050630b2fc3fe1472bdc7ae5f98ca0242ca8506f562f3d9836170f91"},
@@ -2492,6 +2559,39 @@ injector = [
 keyboard = [
     {file = "keyboard-0.13.5-py3-none-any.whl", hash = "sha256:8e9c2422f1217e0bd84489b9ecd361027cc78415828f4fe4f88dd4acd587947b"},
     {file = "keyboard-0.13.5.zip", hash = "sha256:63ed83305955939ca5c9a73755e5cc43e8242263f5ad5fd3bb7e0b032f3d308b"},
+]
+lief = [
+    {file = "lief-0.12.3-cp310-cp310-macosx_10_14_arm64.whl", hash = "sha256:66724f337e6a36cea1a9380f13b59923f276c49ca837becae2e7be93a2e245d9"},
+    {file = "lief-0.12.3-cp310-cp310-macosx_10_14_x86_64.whl", hash = "sha256:6d18aafa2028587c98f6d4387bec94346e92f2b5a8a5002f70b1cf35b1c045cc"},
+    {file = "lief-0.12.3-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:c078d6230279ffd3bca717c79664fb8368666f610b577deb24b374607936e9c1"},
+    {file = "lief-0.12.3-cp310-cp310-win32.whl", hash = "sha256:e3a6af926532d0aac9e7501946134513d63217bacba666e6f7f5a0b7e15ba236"},
+    {file = "lief-0.12.3-cp310-cp310-win_amd64.whl", hash = "sha256:0750b72e3aa161e1fb0e2e7f571121ae05d2428aafd742ff05a7656ad2288447"},
+    {file = "lief-0.12.3-cp311-cp311-macosx_10_14_arm64.whl", hash = "sha256:b5c123cb99a7879d754c059e299198b34e7e30e3b64cf22e8962013db0099f47"},
+    {file = "lief-0.12.3-cp311-cp311-macosx_10_14_x86_64.whl", hash = "sha256:8bc58fa26a830df6178e36f112cb2bbdd65deff593f066d2d51434ff78386ba5"},
+    {file = "lief-0.12.3-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:04eb6b70d646fb5bd6183575928ee23715550f161f2832cbcd8c6ff2071fb408"},
+    {file = "lief-0.12.3-cp311-cp311-win32.whl", hash = "sha256:7e2d0a53c403769b04adcf8df92e83c5e25f9103a052aa7f17b0a9cf057735fb"},
+    {file = "lief-0.12.3-cp311-cp311-win_amd64.whl", hash = "sha256:7f6395c12ee1bc4a5162f567cba96d0c72dfb660e7902e84d4f3029daf14fe33"},
+    {file = "lief-0.12.3-cp36-cp36m-macosx_10_14_x86_64.whl", hash = "sha256:71327fdc764fd2b1f3cd371d8ac5e0b801bde32b71cfcf7dccee506d46768539"},
+    {file = "lief-0.12.3-cp36-cp36m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:d320fb80ed5b42b354b8e4f251ab05a51929c162c57c377b5e95ad4b1c1b415d"},
+    {file = "lief-0.12.3-cp36-cp36m-win32.whl", hash = "sha256:176fa6c342dd480195cda34a20f62ac76dfae103b22ca7583b762e0b434ee1f3"},
+    {file = "lief-0.12.3-cp36-cp36m-win_amd64.whl", hash = "sha256:3a18fe108fb82a2640864deef933731afe77413b1226551796ef2c373a1b3a2a"},
+    {file = "lief-0.12.3-cp37-cp37m-macosx_10_14_x86_64.whl", hash = "sha256:c73e990cd2737d1060b8c1e8edcc128832806995b69d1d6bf191409e2cea7bde"},
+    {file = "lief-0.12.3-cp37-cp37m-manylinux2014_aarch64.whl", hash = "sha256:5fa2b1c8ffe47ee66b2507c2bb4e3fd628965532b7888c0627d10e690b5ef20c"},
+    {file = "lief-0.12.3-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:5f224e9a261e88099f86160f121d088d30894c2946e3e551cf11c678daadcf2b"},
+    {file = "lief-0.12.3-cp37-cp37m-win32.whl", hash = "sha256:3481d7c9fb3d3a1acff53851f40efd1a5a05d354312d367294bc2e310b736826"},
+    {file = "lief-0.12.3-cp37-cp37m-win_amd64.whl", hash = "sha256:4e5173e1be5ebf43594f4eb187cbcb04758761942bc0a1e685ea1cb9047dc0d9"},
+    {file = "lief-0.12.3-cp38-cp38-macosx_10_14_x86_64.whl", hash = "sha256:54d6a45e01260b9c8bf1c99f58257cff5338aee5c02eacfeee789f9d15cf38c6"},
+    {file = "lief-0.12.3-cp38-cp38-manylinux2014_aarch64.whl", hash = "sha256:4501dc399fb15dc7a3c8df4a76264a86be6d581d99098dafc3a67626149d8ff1"},
+    {file = "lief-0.12.3-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:c848aadac0816268aeb9dde7cefdb54bf24f78e664a19e97e74c92d3be1bb147"},
+    {file = "lief-0.12.3-cp38-cp38-win32.whl", hash = "sha256:d7e35f9ee9dd6e79add3b343f83659b71c05189e5cb224e02a1902ddc7654e96"},
+    {file = "lief-0.12.3-cp38-cp38-win_amd64.whl", hash = "sha256:b00667257b43e93d94166c959055b6147d46d302598f3ee55c194b40414c89cc"},
+    {file = "lief-0.12.3-cp39-cp39-macosx_10_14_arm64.whl", hash = "sha256:e6a1b5b389090d524621c2455795e1262f62dc9381bedd96f0cd72b878c4066d"},
+    {file = "lief-0.12.3-cp39-cp39-macosx_10_14_x86_64.whl", hash = "sha256:ae773196df814202c0c51056163a1478941b299512b09660a3c37be3c7fac81e"},
+    {file = "lief-0.12.3-cp39-cp39-manylinux2014_aarch64.whl", hash = "sha256:4a47f410032c63ac3be051d963d0337d6b47f0e94bfe8e946ab4b6c428f4d0f8"},
+    {file = "lief-0.12.3-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:dbd11367c2259bd1131a6c8755dcde33314324de5ea029227bfbc7d3755871e6"},
+    {file = "lief-0.12.3-cp39-cp39-win32.whl", hash = "sha256:2ce53e311918c3e5b54c815ef420a747208d2a88200c41cd476f3dd1eb876bcf"},
+    {file = "lief-0.12.3-cp39-cp39-win_amd64.whl", hash = "sha256:446e53ccf0ebd1616c5d573470662ff71ca6df3cd62ec1764e303764f3f03cca"},
+    {file = "lief-0.12.3.zip", hash = "sha256:62e81d2f1a827d43152aed12446a604627e8833493a51dca027026eed0ce7128"},
 ]
 loguru = [
     {file = "loguru-0.5.3-py3-none-any.whl", hash = "sha256:f8087ac396b5ee5f67c963b495d615ebbceac2796379599820e324419d53667c"},
@@ -2645,6 +2745,7 @@ opencv-python-headless = [
 ]
 orjson = [
     {file = "orjson-3.6.4-cp310-cp310-macosx_10_7_x86_64.whl", hash = "sha256:fc01a15f3101628fd619158daec79b30d7461149735e73542ca8c13be6b835be"},
+    {file = "orjson-3.6.4-cp310-cp310-macosx_10_9_x86_64.macosx_11_0_arm64.macosx_10_9_universal2.whl", hash = "sha256:c840e6ca222f76e7f13e9ee2f0650c9ee449e5e4aae38c73ab6ecaf3077ea21c"},
     {file = "orjson-3.6.4-cp310-cp310-manylinux_2_24_aarch64.whl", hash = "sha256:48a69fed90f551bf9e9bb7a63e363fed4f67fc7c6e6bfb057054dc78f6721e9e"},
     {file = "orjson-3.6.4-cp310-cp310-manylinux_2_24_x86_64.whl", hash = "sha256:3722f02f50861d5e2a6be9d50bfe8da27a5155bb60043118a4e1ceb8c7040cf7"},
     {file = "orjson-3.6.4-cp310-none-win_amd64.whl", hash = "sha256:231a99a728322d0271e970b149c57deb67315e6837e6cd4166cf51d30161700c"},
@@ -2671,6 +2772,14 @@ orjson = [
 packaging = [
     {file = "packaging-21.2-py3-none-any.whl", hash = "sha256:14317396d1e8cdb122989b916fa2c7e9ca8e2be9e8060a6eff75b6b7b4d8a7e0"},
     {file = "packaging-21.2.tar.gz", hash = "sha256:096d689d78ca690e4cd8a89568ba06d07ca097e3306a4381635073ca91479966"},
+]
+patchelf = [
+    {file = "patchelf-0.17.0.0-py2.py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.musllinux_1_1_aarch64.whl", hash = "sha256:bb675f65ad3d999763e7332a53ec98d5ae186fb057e15f781de0d108e2258f5d"},
+    {file = "patchelf-0.17.0.0-py2.py3-none-manylinux_2_17_ppc64le.manylinux2014_ppc64le.musllinux_1_1_ppc64le.whl", hash = "sha256:634e7b0c389251f2f8ae3f30a0cfb15873048113fcd22ae18ca354a96dc94368"},
+    {file = "patchelf-0.17.0.0-py2.py3-none-manylinux_2_17_s390x.manylinux2014_s390x.musllinux_1_1_s390x.whl", hash = "sha256:80008417d50f66a82747a1a851f100c0f2de5f0df7aec9eaca0b479ad10a3caa"},
+    {file = "patchelf-0.17.0.0-py2.py3-none-manylinux_2_5_i686.manylinux1_i686.musllinux_1_1_i686.whl", hash = "sha256:f01e680cdfbbcdfd70dc95b23fe19f6c05b76a92961d04bf812ee188b8bd013a"},
+    {file = "patchelf-0.17.0.0-py2.py3-none-manylinux_2_5_x86_64.manylinux1_x86_64.musllinux_1_1_x86_64.whl", hash = "sha256:858447ad58f84818afce32ad870c559fa27c3fe102302e9906d376461055e599"},
+    {file = "patchelf-0.17.0.0.tar.gz", hash = "sha256:a90c0244593ad353513b098a3c46a5fd60a71c160b7acf86ed16f1b5cb98878b"},
 ]
 pillow = [
     {file = "Pillow-8.4.0-cp310-cp310-macosx_10_10_universal2.whl", hash = "sha256:81f8d5c81e483a9442d72d182e1fb6dcb9723f289a57e8030811bac9ea3fef8d"},
@@ -3452,6 +3561,10 @@ pytest = [
 qasync = [
     {file = "qasync-0.22.0-py3-none-any.whl", hash = "sha256:c270f8fef209c58df78489977f5351d025582954a56b6333563711966c1ad177"},
     {file = "qasync-0.22.0.tar.gz", hash = "sha256:bd77192a13b1c94835a0c87320e88008feaa691b7ee51860447dfa3c5f34708d"},
+]
+setuptools = [
+    {file = "setuptools-65.6.3-py3-none-any.whl", hash = "sha256:57f6f22bde4e042978bcd50176fdb381d7c21a9efa4041202288d3737a0c6a54"},
+    {file = "setuptools-65.6.3.tar.gz", hash = "sha256:a7620757bf984b58deaf32fc8a4577a9bbc0850cf92c20e1ce41c38c19e5fb75"},
 ]
 toml = [
     {file = "toml-0.10.2-py2.py3-none-any.whl", hash = "sha256:806143ae5bfb6a3c6e736a764057db0e6a0e05e338b5630894a5f779cabb4f9b"},

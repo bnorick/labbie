@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "labbie"
-version = "0.6.1"
+version = "0.6.6"
 description = "Lab enchant assistant"
 authors = ["Brandon Norick <b.norick@gmail.com>"]
 
@@ -22,15 +22,15 @@ opencv-python-headless = "^4.5.4"
 pyperclip = "^1.8.2"
 datrie = "^0.8.2"
 
-[tool.poetry.dev-dependencies]
-pytest = "^5.2"
-flake8 = "^4.0.1"
-cx-Freeze = "^6.8.1"
-poetry2setup = "^1.0.0"
-
 [tool.poetry.scripts]
 labbie = "labbie.__main__:main"
 package = "package:package"
+
+[tool.poetry.group.dev.dependencies]
+cx-Freeze = "^6.13.1"
+pytest = "^5.2"
+flake8 = "^4.0.1"
+poetry2setup = "^1.0.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
