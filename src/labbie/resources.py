@@ -144,7 +144,7 @@ class ResourceManager:
     _RESOURCES = {
         'trade_stats': Resource(version=6, path_format='pathofexile/{version}/stats.json.gz'),
         'items': Resource(version=6, path_format='pathofexile/{version}/items.json.gz'),
-        'mods': Resource(version=6, path_format='repoe/{version}/mods.json.gz'),
+        'enchants': Resource(version=6, path_format='pob/{version}/enchants.json.gz'),
     }
 
     @injector.inject
@@ -157,7 +157,7 @@ class ResourceManager:
         # NOTE: the following attributes are set by _get_all_resources
         self.trade_stats: Dict[str, str] = None
         self.items: Dict[str, List[Tuple[bool, str, str]]] = None
-        self.mods: Dict[str, List[List[str, List[str], List[Union[float, int, str]], bool]]] = None
+        self.enchants: Dict[str, List[Tuple[str, str, Optional[float]]]] = None
 
     def initialize(self):
         self._constants.resources_dir.mkdir(parents=True, exist_ok=True)

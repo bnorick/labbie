@@ -404,7 +404,7 @@ class ResultWidgetPresenter:
 
         for enchant in results:
             for mod in enchant.mods:
-                if mod not in self._mods.helm_mods:
+                if mod not in self._mods.helm_enchants:
                     continue
                 enchants[mod] += 1
 
@@ -421,7 +421,7 @@ class ResultWidgetPresenter:
         return (len(results), display_results)
 
     def on_price_check(self):
-        mod_info = self._mods.helm_mod_info.get(self._mod)
+        mod_info = self._mods.helm_enchant_info.get(self._mod)
         if mod_info is None:
             logger.error(f'Unable to find helm mod info for "{self._mod}"')
             return
@@ -466,7 +466,7 @@ class ResultWidgetPresenter:
         return (len(results), display_results)
 
     def on_price_check(self):
-        mod_info = self._mods.helm_mod_info.get(self._mod)
+        mod_info = self._mods.helm_enchant_info.get(self._mod)
         if mod_info is None:
             logger.error(f'Unable to find helm mod info for "{self._mod}"')
             return

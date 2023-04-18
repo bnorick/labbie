@@ -70,7 +70,7 @@ class AppPresenter:
             save_path = self._constants.screenshots_dir / datetime.datetime.now().strftime('%Y-%m-%d_%H%M%S')
             save_path.mkdir(exist_ok=True)
         partial_enchant_list = ocr.read_enchants(self._config.ocr.bounds, save_path)
-        curr_enchants = self.mods.get_mod_list_from_ocr_results(partial_enchant_list)
+        curr_enchants = self.mods.get_enchant_list_from_ocr_results(partial_enchant_list)
         logger.debug(f'{curr_enchants=}')
         if curr_enchants:
             with (self._constants.logs_dir / 'enchants.jsonl').open('ab') as f:
