@@ -40,8 +40,6 @@ class SettingsPresenter:
         self._view.set_reset_window_positions_handler(self.on_reset_window_positions)
         self._view.set_save_handler(self.on_save)
 
-        self._view.league = self._config.league
-        self._view.daily = self._config.daily
         self._view.clear_previous = self._config.ocr.clear_previous
         self._view.hotkey = self._config.ui.hotkeys.ocr
         self._view.left = str(self._config.ocr.bounds.left)
@@ -100,20 +98,6 @@ class SettingsPresenter:
 
             self._app_presenter.show(keys.ErrorWindowKey(e))
             return
-
-        if self._view.league != self._config.league:
-            self._config.league = self._view.league
-            if self._config.league:
-                asyncio.create_task(self._app_state.league_enchants.download_or_load(self._constants))
-            else:
-                self._app_state.league_enchants.set_enchants(None, None)
-
-        if self._view.daily != self._config.daily:
-            self._config.daily = self._view.daily
-            if self._config.daily:
-                asyncio.create_task(self._app_state.daily_enchants.download_or_load(self._constants))
-            else:
-                self._app_state.daily_enchants.set_enchants(None, None)
 
         if self._view.hotkey != self._config.ui.hotkeys.ocr:
             self._config.ui.hotkeys.ocr = self._view.hotkey

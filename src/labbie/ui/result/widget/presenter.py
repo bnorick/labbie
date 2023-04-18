@@ -178,7 +178,7 @@ class ResultWidgetPresenter:
         result_str = result.league_summary(result.base) or ''
         if result_str:
             result_str += '\n\n'
-        result_str += result.daily_summary(result.base)
+        result_str += result.daily_summary(result.base) or ''
 
         if result.base:
             self._view.set_price_check_visible(False)

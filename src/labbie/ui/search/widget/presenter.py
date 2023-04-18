@@ -108,11 +108,12 @@ class SearchPresenter:
                 return
 
         daily_matches = None
-        try:
-            daily_matches = self._app_state.daily_enchants.find_matching_enchants(mod)
-        except errors.EnchantsNotLoaded as e:
-            self._app_presenter.show(keys.ErrorWindowKey(e))
-            return
+        if self._app_state.daily_enchants.enabled:
+            try:
+                daily_matches = self._app_state.daily_enchants.find_matching_enchants(mod)
+            except errors.EnchantsNotLoaded as e:
+                self._app_presenter.show(keys.ErrorWindowKey(e))
+                return
 
         result = search_result.Result(
             title=mod,

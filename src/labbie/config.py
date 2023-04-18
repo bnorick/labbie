@@ -56,7 +56,7 @@ class Config(BaseConfig, mixins.SerializableMixin):
     ui: UiConfig = UiConfig()
     ocr: OcrConfig = OcrConfig()
     league: bool = True
-    daily: bool = True
+    daily: bool = False
 
     @classmethod
     def from_toml(cls, path: pathlib.Path):

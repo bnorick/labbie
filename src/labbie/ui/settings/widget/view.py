@@ -13,14 +13,6 @@ class SettingsWidget(base.BaseWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        group_builds = QtWidgets.QGroupBox('Build Scrapes', self)
-
-        lbl_league = QtWidgets.QLabel('League', self)
-        self.switch_league = switch.Switch(self, thumb_radius=8, track_radius=5)
-
-        lbl_daily = QtWidgets.QLabel('Daily', self)
-        self.switch_daily = switch.Switch(self, thumb_radius=8, track_radius=5)
-
         group_screen_capture = QtWidgets.QGroupBox('Screen Capture', self)
 
         lbl_hotkey = QtWidgets.QLabel('Hotkey', self)
@@ -43,17 +35,6 @@ class SettingsWidget(base.BaseWidget):
 
         self.btn_save = QtWidgets.QPushButton('Save', self)
         self.btn_cancel = QtWidgets.QPushButton('Cancel', self)
-
-        layout_active = QtWidgets.QGridLayout()
-        layout_active.addWidget(lbl_league, 0, 0)
-        layout_active.addWidget(self.switch_league, 0, 1)
-        layout_active.addWidget(lbl_daily, 1, 0)
-        layout_active.addWidget(self.switch_daily, 1, 1)
-
-        layout_builds = QtWidgets.QHBoxLayout()
-        layout_builds.addLayout(layout_active)
-        layout_builds.addStretch(1)
-        group_builds.setLayout(layout_builds)
 
         lbl_clear = QtWidgets.QLabel('Clear previous results', self)
         self.switch_clear = switch.Switch(self, thumb_radius=8, track_radius=5)
@@ -105,7 +86,6 @@ class SettingsWidget(base.BaseWidget):
         layout_actions.addWidget(self.btn_cancel)
 
         layout = QtWidgets.QVBoxLayout()
-        layout.addWidget(group_builds)
         layout.addWidget(group_screen_capture)
         layout.addLayout(layout_actions)
         self.setLayout(layout)
@@ -126,14 +106,6 @@ class SettingsWidget(base.BaseWidget):
 
     def set_save_handler(self, handler):
         self._connect_signal_to_slot(self.btn_save.clicked, handler)
-
-    @utils.checkbox_property
-    def league(self):
-        return self.switch_league
-
-    @utils.checkbox_property
-    def daily(self):
-        return self.switch_daily
 
     @utils.checkbox_property
     def clear_previous(self):
