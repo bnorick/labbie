@@ -405,7 +405,7 @@ def base_summary(enchants: List[Enchant]):
 
     for enchant in enchants:
         for mod in enchant.mods:
-            mods[inexact_mod(mod)] += 1
+            mods[mod] += 1
 
     summary = [f'  {count:>3d} {val}' for val, count in mods.most_common()]
 
