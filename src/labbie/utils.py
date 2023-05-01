@@ -64,7 +64,7 @@ def relaunch(debug, exit_fn=None):
 
 
 def instances_shm():
-    return mmap.mmap(-1, 1, 'labbie_instances')
+    return mmap.mmap(-1, 1)
 
 
 def exit_if_already_running():
