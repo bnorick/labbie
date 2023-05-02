@@ -56,7 +56,7 @@ class SearchPresenter:
         # TODO(bnorick): attach to enchants so that we can update the dropdowns when enchants change
         influences = ['Shaper', 'Elder', 'Crusader', 'Redeemer', 'Hunter', 'Warlord']
         self._view.set_influence_options(influences, influences)
-        self._view.set_mods(self._mods.helm_display_mods, None)
+        self._view.set_mods(self._mods.helm_enchants, None)
         self._view.set_bases(self._bases.helm_display_texts)
 
         if constants_.debug:
@@ -108,11 +108,12 @@ class SearchPresenter:
                 return
 
         daily_matches = None
-        try:
-            daily_matches = self._app_state.daily_enchants.find_matching_enchants(mod)
-        except errors.EnchantsNotLoaded as e:
-            self._app_presenter.show(keys.ErrorWindowKey(e))
-            return
+        if self._app_state.daily_enchants.enabled:
+            try:
+                daily_matches = self._app_state.daily_enchants.find_matching_enchants(mod)
+            except errors.EnchantsNotLoaded as e:
+                self._app_presenter.show(keys.ErrorWindowKey(e))
+                return
 
         result = search_result.Result(
             title=mod,

@@ -15,10 +15,10 @@ _SCRAPES_FORMAT = '''
 <tr>
 <td width="25%"></td>
 <td width="25%">
-<span style="font-weight: bold;">League</span> {league:%Y-%m-%d}
+<span style="font-weight: bold;">League</span> {league}
 </td>
 <td width="25%" style="padding-left: 10px;">
-<span style="font-weight: bold; padding-left: 10px;">Daily</span> {daily:%Y-%m-%d}
+<span style="font-weight: bold; padding-left: 10px;">Daily</span> {daily}
 </td>
 <td width="25%"></td>
 </tr>
@@ -84,6 +84,8 @@ class AboutWidget(base.BaseWidget):
             self.btn_relaunch.setText('Relaunch (Normal)')
 
     def set_scrapes(self, league, daily):
+        league = f"{league:%Y-%m-%d}" if league else "Not loaded"
+        daily = f"{daily:%Y-%m-%d}" if daily else "Not loaded"
         self.lbl_scrapes.setText(_SCRAPES_FORMAT.format(league=league, daily=daily))
         self.lbl_scrapes.adjustSize()
 

@@ -35,7 +35,7 @@ class NoSuchBase(Exception):
 
 class FailedToDownloadResource(Exception):
     def __init__(self, remote_resource: str):
-        error = 'Failed to download resource {}.'
+        error = f"Failed to download resource {remote_resource}."
         super().__init__(error)
 
 

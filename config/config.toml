@@ -1,5 +1,4 @@
 league = true
-daily = true
 
 [ui]
     hotkeys = { ocr = '' }

@@ -14,10 +14,8 @@ logger = loguru.logger
 
 
 @dataclasses.dataclass
-class HelmModInfo:
-    display: bool
-    mod: str
-    trade_text: Optional[str]
+class HelmEnchantInfo:
+    enchant: str
     trade_stat_id: Optional[str]
     trade_stat_value: Union[None, int, float]
 
@@ -30,93 +28,37 @@ class Mods:
         self._resource_manager = resource_manager
         self._trade = trade_
 
-        self._raw_mods = resource_manager.mods
+        self._raw_enchants = resource_manager.enchants
 
-        self.helm_mod_info = self._build_helm_mod_info(self._raw_mods['helmet'])  # exact mod -> HelmModInfo
-
-    @functools.cached_property
-    def helm_mods(self):
-        return sorted(self.helm_mod_info.keys())
+        self.helm_enchant_info = self._build_helm_enchant_info(self._raw_enchants['helmet'])  # exact mod -> HelmModInfo
 
     @functools.cached_property
-    def helm_display_mods(self):
-        return sorted(k for k, v in self.helm_mod_info.items() if v.display)
+    def helm_enchants(self):
+        return sorted(self.helm_enchant_info.keys())
 
-    def _build_helm_mod_info(
+    def _build_helm_enchant_info(
         self,
-        mods: List[List[Tuple[str, List[str], List[Union[float, int, str]], bool]]]
-    ) -> Dict[str, HelmModInfo]:
+        enchants: List[Tuple[str, str, Optional[float]]]
+    ) -> Dict[str, HelmEnchantInfo]:
         result = {}
-        for index, mod_variants in enumerate(mods):
-            trade_text = None
-
-            for mod_format, slot_patterns, _, _ in mod_variants:
-                if '{' not in mod_format:
-                    candidate = mod_format.lower()
-                    if candidate in self._trade.text_to_stat_id:
-                        trade_text = candidate
-                        break
-
-                slotted = mod_format.format(*slot_patterns).lower()
-                hash_only_slot_patterns = ['#'] * mod_format.count('{')
-                hash_only_slotted = mod_format.format(*hash_only_slot_patterns).lower()
-                if slotted in self._trade.text_to_stat_id:
-                    trade_text = slotted
-                    break
-                elif hash_only_slotted in self._trade.text_to_stat_id:
-                    trade_text = hash_only_slotted
-                    break
-                else:
-                    continue
-            else:
-                logger.warning(f'No trade text found for {index=} {mod_variants=}')
-
-            trade_stat_id = self._trade.text_to_stat_id.get(trade_text)
-            for mod_format, slot_patterns, values, display in mod_variants:
-                if '{' not in mod_format:
-                    result[mod_format] = HelmModInfo(
-                        display=display,
-                        mod=mod_format,
-                        trade_text=trade_text,
-                        trade_stat_id=trade_stat_id,
-                        trade_stat_value=None
-                    )
-                    continue
-
-                # if # ocurrs in mod_format we need to rethink some logic below
-                assert '#' not in mod_format
-
-                if len(values) == 1:
-                    trade_stat_value = values[0]
-                elif len(values) == 2:
-                    trade_stat_value = sum(values) / 2
-                else:
-                    raise ValueError(f'{mod_format=} has an unexpected number of values - '
-                                     f'{len(values)=} {values=}')
-
-                slot_values = [pattern.replace('#', str(value))
-                               for pattern, value in zip(slot_patterns, values)]
-                mod = mod_format.format(*slot_values)
-                result[mod] = HelmModInfo(
-                    display=display,
-                    mod=mod,
-                    trade_text=trade_text,
-                    trade_stat_id=trade_stat_id,
-                    trade_stat_value=trade_stat_value
-                )
-
+        for enchant, trade_stat_id, trade_stat_value in enchants:
+            result[enchant] = HelmEnchantInfo(
+                enchant=enchant,
+                trade_stat_id=trade_stat_id,
+                trade_stat_value=trade_stat_value
+            )
         return result
 
     @functools.cached_property
-    def mod_trie(self) -> datrie.Trie:
-        logger.debug('Creating Trie')
+    def helm_enchant_trie(self) -> datrie.Trie:
+        logger.debug('Creating helm enchant trie')
         trie = datrie.Trie(string.printable)
-        for mod in self.helm_mods:
+        for mod in self.helm_enchants:
             trie[mod] = 1
         return trie
 
-    def get_mod_list_from_ocr_results(self, enchant_list):
-        trie = self.mod_trie
+    def get_enchant_list_from_ocr_results(self, enchant_list):
+        trie = self.helm_enchant_trie
         logger.debug(f'Data from OCR{enchant_list}')
 
         state = datrie.State(trie)

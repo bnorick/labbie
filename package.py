@@ -60,7 +60,8 @@ setup_kwargs = {
     'options': {
         'build_exe': {
             # 'packages': ['pygame', 'random', 'ConfigParser', 'sys'],
-            'include_files': ['assets', 'bin', 'config', 'README.md', 'LICENSE']
+            'include_files': ['assets', 'bin', 'config', 'README.md', 'LICENSE'],
+            'include_msvcr': True
         }
     },
     'executables': [cx_Freeze.Executable('entry_point.py', base='Win32GUI', target_name='Labbie.exe', icon='assets/taxi-32.ico')],

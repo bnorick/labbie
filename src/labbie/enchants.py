@@ -56,7 +56,7 @@ class Enchant:
             if self.item_name != target.item_name:
                 return False
         else:
-            if self.item_base != target.item_base:
+            if self.item_base != target.item_base or self.unique:
                 return False
 
         if self.ilvl < target.ilvl:
@@ -222,6 +222,7 @@ class Enchants(mixins.ObservableMixin):
                 unique = enchant.unique
                 item_name = enchant.item_name
                 item_base = enchant.item_base
+                logger.debug(f'found match for {base_name=} - {unique=} {item_name=} {item_base=}')
                 break
         else:
             raise errors.NoSuchBase
@@ -404,7 +405,7 @@ def base_summary(enchants: List[Enchant]):
 
     for enchant in enchants:
         for mod in enchant.mods:
-            mods[inexact_mod(mod)] += 1
+            mods[mod] += 1
 
     summary = [f'  {count:>3d} {val}' for val, count in mods.most_common()]
 
