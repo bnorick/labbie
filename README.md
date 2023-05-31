@@ -9,9 +9,9 @@ Features include:
 - Summary of all enchants and bases
 - Screen capture lookup for enchants at the end of Lab
 
-All enchant information is pulled daily from [poe.ninja](https://poe.ninja/) from both [SC trade](https://poe.ninja/challenge/builds) and [daily builds](https://poe.ninja/daily/builds) (currently this amounts to around 5GB per day). The enchant specific information is extracted and stored in Azure blob for users of Labbie, preventing too much load on poe.ninja.
+All character information is pulled daily from [poe.ninja](https://poe.ninja/) for [SC trade](https://poe.ninja/challenge/builds), which amounts to 5-15 GB per day depending on how long the league has been running. The enchant specific information is extracted and stored in Azure blob for users of Labbie, preventing too much load on poe.ninja and reducing the amount of data that Labbie itself downloads to just 1-2 MB per day.
 
-Additional features, such as enchant statistics, will be coming in the future.
+Additional features, such as enchant statistics, will be coming in the future. If you have ideas or specific requests, please submit an issue so I can track them more easily.
 
 Labbie was written to use on the Windows operating system, so YMMV if you choose to try with other operating systems (and I don't currently have plans to produce releases for other operating systems).
 
