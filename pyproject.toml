@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "labbie"
-version = "0.6.8"
+version = "0.6.9"
 description = "Lab enchant assistant"
 authors = ["Brandon Norick <b.norick@gmail.com>"]
 

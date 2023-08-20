@@ -142,9 +142,9 @@ class ResourceManager:
 
     # NOTE: file names must not collide, as the local path only includes the name and not the full path
     _RESOURCES = {
-        'trade_stats': Resource(version=6, path_format='pathofexile/{version}/stats.json.gz'),
-        'items': Resource(version=6, path_format='pathofexile/{version}/items.json.gz'),
-        'enchants': Resource(version=6, path_format='pob/{version}/enchants.json.gz'),
+        'trade_stats': Resource(version=7, path_format='pathofexile/{version}/stats.json.gz'),
+        'items': Resource(version=7, path_format='pathofexile/{version}/items.json.gz'),
+        'enchants': Resource(version=7, path_format='pob/{version}/enchants.json.gz'),
     }
 
     @injector.inject
